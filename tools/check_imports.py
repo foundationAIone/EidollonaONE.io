@@ -24,9 +24,6 @@ for d in SCAN_DIRS:
         except Exception:
             continue
         if FORBIDDEN_PATTERN.search(s):
-            # Allow the existing deprecated shim module itself until scheduled removal
-            if str(p).replace("\\", "/").endswith("ai_core/trading_bots/__init__.py"):
-                continue
             legacy_hits.append(str(p))
 if legacy_hits:
     print("Found legacy imports:", *[" - " + x for x in legacy_hits], sep="\n")

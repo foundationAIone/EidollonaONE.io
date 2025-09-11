@@ -26,8 +26,8 @@ jobs:
         run: python .\tools\enforce_symbolic_v41.py
       - name: Tests (fast)
         run: pytest -q
-      - name: Coverage
-        run: pytest --cov=. --cov-report=xml --cov-report=term
+      - name: Coverage (fail-under=60)
+        run: pytest --cov=. --cov-report=xml --cov-report=term --cov-fail-under=60
       - name: Upload coverage xml
         uses: actions/upload-artifact@v4
         with:
@@ -41,7 +41,13 @@ jobs:
           name: perf-current
           path: perf-current.json
       - name: Dependency audit (JSON)
-        run: pip-audit -f json -o pip-audit.json || exit 0
+        shell: pwsh
+        run: |
+          if (Test-Path requirements.txt) {
+            pip-audit -r requirements.txt -f json -o pip-audit.json || $LASTEXITCODE=0
+          } else {
+            pip-audit -f json -o pip-audit.json || $LASTEXITCODE=0
+          }
       - name: Upload audit
         uses: actions/upload-artifact@v4
         with:
