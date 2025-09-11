@@ -42,16 +42,21 @@ if EncryptionLayer:
     kid = enc.create_encryption_key()
     key = enc.encryption_keys[kid]
     payload = os.urandom(RESULT["encryption_payload_size"])
+    # Warmup
+    for _ in range(10):
+        ed_w = enc.encryption_engine.encrypt_data(payload, key, compression=False)
+        enc.encryption_engine.decrypt_data(ed_w, key)
     iters = 200
     times = []
     for _ in range(iters):
         t0 = time.perf_counter()
-        ed = enc.encrypt_data(payload, key)
-        enc.decrypt_data(ed.data_id, key.key_id)
+        ed = enc.encryption_engine.encrypt_data(payload, key, compression=False)
+        enc.encryption_engine.decrypt_data(ed, key)
         times.append(time.perf_counter() - t0)
-    median = statistics.median(times)
-    if median > 0:
-        RESULT["encryption_chacha_ops_per_sec"] = round(1.0 / median, 2)
+    if times:
+        median = statistics.median(times)
+        if median > 0:
+            RESULT["encryption_chacha_ops_per_sec"] = round(1.0 / median, 2)
 
 # Symbolic evaluation latency
 if SymbolicEquation:
