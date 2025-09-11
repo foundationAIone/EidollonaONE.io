@@ -1,0 +1,58 @@
+repos:
+  - repo: local
+    hooks:
+      - id: compile-project
+        name: compile project
+        entry: python scripts/compile_project.py
+        language: system
+        pass_filenames: false
+      - id: enforce-se41
+        name: enforce symbolic v4.1
+        entry: python scripts/enforce_symbolic_v41.py
+        language: system
+        pass_filenames: false
+      - id: pytest-smoke
+        name: pytest smoke
+        entry: python -m pytest -q tests/test_embodiment_controller.py tests/test_ethos_gate.py
+        language: system
+        pass_filenames: false
+      - id: duplicate-audit
+        name: duplicate audit
+        entry: python tools/duplicate_audit.py --root . --limit 25
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+
+  - repo: local
+    hooks:
+      - id: import-audit
+        name: import audit ai_core.bots
+        entry: python tools/check_imports.py
+        language: system
+        pass_filenames: false
+      - id: import-policy
+        name: import policy guard
+        entry: python tests/test_import_policy.py
+        language: system
+        pass_filenames: false
+      - id: se41-enforce
+        name: se41 enforcement
+        entry: python tools/enforce_symbolic_v41.py
+        language: system
+        pass_filenames: false
+      - id: pytest-fast
+        name: pytest fast suite
+        entry: pytest -q tests/test_import_policy.py tests/test_encryption_roundtrip.py tests/test_bots_governance.py
+        language: system
+        pass_filenames: false

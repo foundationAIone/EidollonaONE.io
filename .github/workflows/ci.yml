@@ -1,0 +1,49 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  build-test-audit:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Install deps
+        run: |
+          python -m pip install -U pip wheel
+          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+          if (Test-Path requirements-dev.txt) { pip install -r requirements-dev.txt }
+          pip install pytest pip-audit pytest-cov
+      - name: Editable install
+        run: pip install -e .
+      - name: Hygiene (Analyze)
+        shell: pwsh
+        run: pwsh -NoProfile -File .\scripts\repo_hygiene.ps1 -Analyze
+      - name: SE41 enforce
+        run: python .\tools\enforce_symbolic_v41.py
+      - name: Tests (fast)
+        run: pytest -q
+      - name: Coverage
+        run: pytest --cov=. --cov-report=xml --cov-report=term
+      - name: Upload coverage xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+      - name: Performance smoke
+        run: python .\scripts\perf_smoke.py > perf-current.json
+      - name: Upload perf snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-current
+          path: perf-current.json
+      - name: Dependency audit (JSON)
+        run: pip-audit -f json -o pip-audit.json || exit 0
+      - name: Upload audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit
+          path: pip-audit.json
