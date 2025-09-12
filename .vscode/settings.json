@@ -1,0 +1,51 @@
+{
+    "python.defaultInterpreterPath": "E:/EidollonaONE/eidollona_env/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+
+    // Python analysis is configured via pyrightconfig.json
+
+    // Formatter configuration (use VS Code default formatter mapping)
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.formatOnSave": true
+    },
+
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/*.pyo": true,
+        "**/*.pyd": true,
+        "**/*.egg-info": true,
+        "**/node_modules": true,
+        "**/.git": true,
+        "**/eidollona_env/Lib": true,
+        "**/quantum_env/Lib": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/.pytest_cache": true,
+        "**/.coverage": true
+    },
+    "files.watcherExclude": {
+        "**/eidollona_env/**": true,
+        "**/quantum_env/**": true,
+        "**/__pycache__/**": true,
+        "**/node_modules/**": true,
+        "**/.git/**": true,
+        "**/build/**": true,
+        "**/dist/**": true,
+        "**/.pytest_cache/**": true
+    },
+
+    "git.ignoreLimitWarning": true,
+    "[yaml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.detectIndentation": false
+    },
+    "files.trimTrailingWhitespace": true,
+    "files.encoding": "utf8",
+    // Frontend TS/JS editor validation off (Rely on build scripts when needed)
+    "javascript.validate.enable": false,
+    "typescript.validate.enable": false,
+    "python.analysis.typeCheckingMode": "standard"
+}

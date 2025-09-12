@@ -26,21 +26,38 @@ jobs:
         run: python .\tools\enforce_symbolic_v41.py
       - name: Tests (fast)
         run: pytest -q
-      - name: Coverage (fail-under=60)
+      - name: Test (cov)
         run: pytest --cov=. --cov-report=xml --cov-report=term --cov-fail-under=60
-      - name: Upload coverage xml
+      - name: Upload coverage.xml
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
+          name: coverage
           path: coverage.xml
-      - name: Performance smoke
-        run: python .\scripts\perf_smoke.py > perf-current.json
+      - name: Compare perf baseline
+        shell: pwsh
+        run: |
+          python scripts/perf_smoke.py > perf_current.json
+          python - <<'PY'
+          import json, sys, pathlib
+          cur = json.loads(pathlib.Path('perf_current.json').read_text())
+          base = json.loads(pathlib.Path('scripts/perf_baseline.json').read_text())
+          fail = []
+          if isinstance(cur.get('encryption_chacha_ops_per_sec'), (int, float)) and isinstance(base.get('encryption_chacha_ops_per_sec'), (int, float)):
+              if cur['encryption_chacha_ops_per_sec'] < 0.8 * base['encryption_chacha_ops_per_sec']:
+                  fail.append('Perf regression: ChaCha ops/sec')
+          if isinstance(cur.get('symbolic_eval_latency_ms'), (int, float)) and isinstance(base.get('symbolic_eval_latency_ms'), (int, float)):
+              if cur['symbolic_eval_latency_ms'] > 1.5 * base['symbolic_eval_latency_ms']:
+                  fail.append('Perf regression: SE41 eval latency')
+          if fail:
+              print('\n'.join(fail))
+              sys.exit(1)
+          PY
       - name: Upload perf snapshot
         uses: actions/upload-artifact@v4
         with:
           name: perf-current
-          path: perf-current.json
-      - name: Dependency audit (JSON)
+          path: perf_current.json
+      - name: pip-audit (json)
         shell: pwsh
         run: |
           if (Test-Path requirements.txt) {

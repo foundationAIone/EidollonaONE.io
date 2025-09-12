@@ -1,0 +1,39 @@
+[project]
+name = "eidollona-one"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = []
+description = "EidollonaONE Core Modules"
+authors = [ { name = "Eidollona" } ]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ai_core*","connection*","symbolic_core*","autonomous_governance*","master_key*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+exclude = [
+	"eidollona_env",
+	"quantum_env",
+	"**/site-packages/**",
+]
+
+[tool.ruff.lint]
+extend-select = ["E","F"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]
+"symbolic_core/symbolic_equation.py" = ["E402"]
+"consciousness_engine/scheduler.py" = ["E402"]
+"ai_core/trading_bots_alias.py" = ["F403"]
+"web_interface/backend/main.py" = ["E722","F811"]
+"web_planning/backend/dashboard/__init__.py" = ["E402"]
+"web_planning/backend/reveal/emoji_channel.py" = ["E402"]

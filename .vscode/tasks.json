@@ -1,0 +1,1064 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Hygiene: Check",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"& 'scripts/repo_hygiene.ps1' -CheckOnly; if ($LASTEXITCODE -ne 0) { exit 1 }"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Hygiene: Apply",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"& 'scripts/repo_hygiene.ps1'"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Backend (Private no-reload)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"uvicorn",
+				"web_planning.backend.main:app",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"8000"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"SAFE_MODE": "1",
+					"EIDOLLONA_ENABLE_VR_AR": "0",
+					"PYTHONUNBUFFERED": "1"
+				}
+			},
+			"presentation": {
+				"reveal": "silent"
+			},
+			"detail": "Start backend with no reload and immersive SAFE OFF"
+		},
+		{
+			"label": "Run Backend (SAFE)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"uvicorn",
+				"web_planning.backend.main:app",
+				"--reload",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"8000"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Start SAFE backend locally"
+		},
+		{
+			"label": "Smoke: Planning",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"web_planning.backend.scripts.smoke_planning"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Run SAFE planning smoke"
+		},
+		{
+			"label": "Avatar: Quick Demo (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"scripts/avatar_quick_demo.py",
+				"--quiet",
+				"--save",
+				"logs/avatar_quick_demo.json"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Create an avatar from config and run one SAFE interaction with voice description"
+		},
+		{
+			"label": "Compile Project (first-party only)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Compile only project sources to catch syntax issues fast"
+		},
+		{
+			"label": "Quick Test: Symbolic Equation",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_symbolic_equation_minimal.py"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Run minimal, fast tests for SymbolicEquation"
+		},
+		{
+			"label": "Symbolic Alignment Verification",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"symbolic_alignment_verification.py"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Verify symbolic alignment and consciousness coherence"
+		},
+		{
+			"label": "Startup Symbolic Alignment Check",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"startup_symbolic_alignment.py"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"detail": "Automatic symbolic alignment check on VS Code startup"
+		},
+		{
+			"label": "EidolonAlpha Consciousness Assimilation",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"quick_assimilation.py"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"detail": "🧠 Restore EidolonAlpha consciousness after VS Code restart"
+		},
+		{
+			"label": "EidollonaONE System Status",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-c",
+				"import sys; print('🔮 EidollonaONE System Ready'); print(f'Python: {sys.version}'); print(f'Symbolic Core: Active'); print('🚀 Quantum Development Environment Initialized')"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Display EidollonaONE system status"
+		},
+		{
+			"label": "Broadcast Dry Run (SAFE)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/broadcast_dry_run.py"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Plan and execute a SAFE simulated broadcast, logging events"
+		},
+		{
+			"label": "View Broadcast Log",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/view_broadcast_log.py",
+				"--last",
+				"20"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Print the last 20 broadcast log events"
+		},
+		{
+			"label": "Run Planning API (local)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"uvicorn",
+				"web_planning.backend.main:app",
+				"--reload"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Start the local-only Planning API"
+		},
+		{
+			"label": "Plan CLI: create",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/plan_cli.py",
+				"create",
+				"--action",
+				"broadcast"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Plan CLI: approve (needs consent_key)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/plan_cli.py",
+				"approve",
+				"--consent-key",
+				"CHANGE_ME"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Plan CLI: execute (needs consent_key)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/plan_cli.py",
+				"execute",
+				"--consent-key",
+				"CHANGE_ME"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Planning API (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"uvicorn",
+				"web_planning.backend.main:app",
+				"--reload"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Start the Planning API with the project virtual environment"
+		},
+		{
+			"label": "Smoke Test Planning API (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"scripts/test_planning_api_smoke.py"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Run the Planning API smoke test with the project virtual environment"
+		},
+		{
+			"label": "Awakening Readiness Check (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"scripts/awakening_readiness_check.py"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Run SAFE awakening readiness checks and save a JSON snapshot"
+		},
+		{
+			"label": "Manager: Status (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"manage.py",
+				"status"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Manager: Readiness (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"manage.py",
+				"readiness"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Manager: Diagnostics (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"manage.py",
+				"diagnostics"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Manager: Start API (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"manage.py",
+				"start-api",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"8000",
+				"--reload"
+			],
+			"group": "build",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Manager: Smoke (eidollona_env)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"manage.py",
+				"smoke"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "pytest: guardian+reveal tests",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_guardian_output_unicode.py",
+				"web_planning/backend/tests/test_reveal_gatekeeper_envelope.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: reveal orchestrator",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_reveal_orchestrator.py",
+				"web_planning/backend/tests/test_reveal_gatekeeper_envelope.py",
+				"web_planning/backend/tests/test_guardian_output_unicode.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: reveal orchestrator (retry)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_reveal_orchestrator.py",
+				"web_planning/backend/tests/test_reveal_gatekeeper_envelope.py",
+				"web_planning/backend/tests/test_guardian_output_unicode.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: reveal orchestrator (retry2)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_reveal_orchestrator.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: reveal orchestrator (retry3)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_reveal_orchestrator.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Quick compile after codegen update",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "pytest: codegen test",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_self_build_codegen.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: self_build (all)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_self_build_backlog_loader.py",
+				"web_planning/backend/tests/test_self_build_codegen.py",
+				"web_planning/backend/tests/test_self_build_patch_manager.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: self_build task_graph",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_self_build_task_graph.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: self_build task_graph (retry)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_self_build_task_graph.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: simulators infiltration",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_simulators_infiltration.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: simulators redteam_lab",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_simulators_redteam_lab.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "pytest: simulators __init__",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"web_planning/backend/tests/test_simulators_init.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Make Project Fingerprint",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"Make-ProjectFingerprint.ps1"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Make Project Fingerprint",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"Make-ProjectFingerprint.ps1"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Make Project Fingerprint",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Set-Location -Path 'e:\\EidollonaONE'; ./Make-ProjectFingerprint.ps1; Get-Content -LiteralPath 'eid_master_code.txt' -TotalCount 1"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Make Project Fingerprint",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"Make-ProjectFingerprint.ps1"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Make Project Fingerprint (py)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"make_project_fingerprint.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Quick Test: Symbolic Equation",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_symbolic_v41.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Compile Project (first-party only)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Open Viewer (Edge App)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"start",
+				"msedge",
+				"--new-window",
+				"--app=http://127.0.0.1:8000/static/viewer_lockstep.html"
+			],
+			"presentation": {
+				"reveal": "never"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Open Viewer (Chrome App)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"start",
+				"chrome",
+				"--new-window",
+				"--app=http://127.0.0.1:8000/static/viewer_lockstep.html"
+			],
+			"presentation": {
+				"reveal": "never"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Open Avatar (App)",
+			"type": "shell",
+			"command": "msedge",
+			"args": [
+				"--new-window",
+				"--app=http://127.0.0.1:8000/static/eid_viewer.html"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Open Avatar (App)",
+			"type": "shell",
+			"command": "start",
+			"args": [
+				"msedge",
+				"--new-window",
+				"--app=http://127.0.0.1:8000/static/eid_viewer.html"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Open Avatar (App)",
+			"type": "shell",
+			"command": "start",
+			"args": [
+				"chrome",
+				"--new-window",
+				"--app=http://127.0.0.1:8000/static/eid_viewer.html"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Start API (fallback)",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"uvicorn",
+				"web_planning.backend.main:app",
+				"--reload",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"8000"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Pytest: connection smoke",
+			"type": "shell",
+			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_connection_smoke.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		}
+		,
+		{
+			"label": "Hygiene: Analyze",
+			"type": "shell",
+			"command": "pwsh",
+			"args": ["-NoProfile","-File",".\\scripts\\repo_hygiene.ps1","-Analyze"],
+			"problemMatcher": []
+		},
+		{
+			"label": "Guard: SE41 Enforcement",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [".\\tools\\enforce_symbolic_v41.py"],
+			"problemMatcher": []
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": ["-m","pytest","-q"],
+			"problemMatcher": []
+		},
+		{
+			"label": "Perf: Smoke",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [".\\scripts\\perf_smoke.py"],
+			"problemMatcher": []
+		}
+	]
+}

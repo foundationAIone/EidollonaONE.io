@@ -1,0 +1,1 @@
+html,body,#root{height:100%;margin:0}.app{width:100vw;height:100vh;background:#0b1020;color:#eee}.app h1{margin:0;padding:8px 12px;font-family:system-ui,Arial,sans-serif;font-weight:600}.app .viewport{width:100%;height:calc(100% - 48px)}.loading{padding:16px}

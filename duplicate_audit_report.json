@@ -1,0 +1,62 @@
+{
+  "stats": {
+    "total_files_scanned": 259,
+    "unique_basenames": 223,
+    "collision_basenames": 4,
+    "exact_content_duplicate_groups": 1,
+    "largest_filename_collision": 6,
+    "largest_content_duplicate_group": 6
+  },
+  "filename_collisions": [
+    {
+      "basename": "symbolic_history_log.json",
+      "count": 6,
+      "paths": [
+        "symbolic_history_log.json",
+        "avatar\\rpm_ecosystem\\rendering\\symbolic_history_log.json",
+        "internet_access\\symbolic_history_log.json",
+        "internet_access\\terminal_assimilation\\symbolic_history_log.json",
+        "internet_access\\self_update\\symbolic_history_log.json",
+        "web_interface\\backend\\symbolic_history_log.json"
+      ]
+    },
+    {
+      "basename": "chain_metrics.py",
+      "count": 2,
+      "paths": [
+        "ai_core\\blockchain\\chain_metrics.py",
+        "blockchain\\chain_metrics.py"
+      ]
+    },
+    {
+      "basename": "main.py",
+      "count": 2,
+      "paths": [
+        "web_interface\\backend\\main.py",
+        "web_planning\\backend\\main.py"
+      ]
+    },
+    {
+      "basename": "router.py",
+      "count": 2,
+      "paths": [
+        "web_planning\\backend\\dashboard\\router.py",
+        "web_planning\\backend\\avatar_api\\router.py"
+      ]
+    }
+  ],
+  "exact_content_duplicates": [
+    {
+      "hash": "b916534feb6c808906337fa045f032566c070450d958a737ac8d0a45251338ad",
+      "count": 6,
+      "paths": [
+        "symbolic_history_log.json",
+        "avatar\\rpm_ecosystem\\rendering\\symbolic_history_log.json",
+        "internet_access\\symbolic_history_log.json",
+        "internet_access\\terminal_assimilation\\symbolic_history_log.json",
+        "internet_access\\self_update\\symbolic_history_log.json",
+        "web_interface\\backend\\symbolic_history_log.json"
+      ]
+    }
+  ]
+}

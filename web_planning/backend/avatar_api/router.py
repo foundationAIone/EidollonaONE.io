@@ -1,0 +1,181 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, HTTPException, Request
+from pathlib import Path
+from typing import Dict, Any
+import os
+import time
+
+try:
+    from common.audit_chain import append_event as _audit
+except Exception:
+
+    def _audit(**_): ...
+
+
+try:
+    # SAFE intake guard
+    from web_planning.backend.guardian.ai_firewall import guard_intake as _guard_in  # type: ignore
+except Exception:
+
+    def _guard_in(_: str):
+        return True, {}
+
+
+try:
+    # Avatar API shims (implemented in avatar/interface/avatar_api.py)
+    from avatar.interface.avatar_api import load_avatar, pose_avatar, animate_avatar, export_avatar  # type: ignore
+except Exception:  # pragma: no cover
+    load_avatar = pose_avatar = animate_avatar = export_avatar = None  # type: ignore
+
+
+router = APIRouter(prefix="/avatar", tags=["avatar"])
+STATE_DIR = Path(
+    os.path.join(os.path.dirname(__file__), "..", "state", "avatar")
+).resolve()
+ART_DIR = STATE_DIR / "artifacts"
+CFG_PATH = Path("avatar/config/default_avatar_config.yaml").resolve()
+
+_SPEC = {
+    "spec_version": 1,
+    "caps": {
+        "build": True,
+        "pose": True,
+        "animate": True,
+        "export": True,
+        "headless": True,
+    },
+}
+
+
+def _ok_guard(text: str) -> None:
+    ok, meta = _guard_in(text)
+    if not ok:
+        raise HTTPException(400, f"avatar_guard_blocked:{(meta or {}).get('reason')}")
+
+
+def _meta(request: Request) -> Dict[str, Any]:
+    return {
+        "request_id": getattr(getattr(request, "state", None), "correlation_id", None)
+    }
+
+
+def _urls_for_run(run_id: str) -> Dict[str, Any]:
+    """Return file names and served URLs for a given artifact run."""
+    outdir = ART_DIR / run_id
+    files = sorted([p.name for p in outdir.glob("*") if p.is_file()])
+    urls = [f"/assets/artifacts/{run_id}/{name}" for name in files]
+    return {"files": files, "urls": urls}
+
+
+@router.get("/spec")
+def spec(request: Request) -> Dict[str, Any]:
+    return {**_SPEC, **_meta(request)}
+
+
+@router.post("/build")
+def build_avatar(request: Request) -> Dict[str, Any]:
+    _ok_guard("build avatar")
+    run_id = str(int(time.time()))
+    try:
+        ART_DIR.mkdir(parents=True, exist_ok=True)
+        outdir = ART_DIR / run_id
+        outdir.mkdir(parents=True, exist_ok=True)
+        if load_avatar is None or export_avatar is None:
+            raise RuntimeError("avatar_api not available")
+        av = load_avatar(config_path=str(CFG_PATH))
+        export_avatar(avatar=av, out_dir=str(outdir), kind="thumbnail")
+        _audit(
+            actor="avatar",
+            action="build",
+            ctx={"run_id": run_id},
+            payload={"cfg": str(CFG_PATH)},
+        )
+        return {"ok": True, "run_id": run_id, **_urls_for_run(run_id), **_meta(request)}
+    except Exception as e:
+        _audit(
+            actor="avatar",
+            action="build_error",
+            ctx={"run_id": run_id},
+            payload={"err": str(e)},
+        )
+        raise HTTPException(500, f"avatar_build_error: {e}")
+
+
+@router.post("/pose")
+def pose(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    _ok_guard("pose avatar")
+    run_id = str(body.get("run_id") or int(time.time()))
+    pose_name = str(body.get("pose") or "neutral")
+    try:
+        outdir = ART_DIR / run_id
+        outdir.mkdir(parents=True, exist_ok=True)
+        if pose_avatar is None:
+            raise RuntimeError("avatar_api not available")
+        pose_avatar(pose=pose_name, out_dir=str(outdir))
+        _audit(
+            actor="avatar",
+            action="pose",
+            ctx={"run_id": run_id},
+            payload={"pose": pose_name},
+        )
+        return {
+            "ok": True,
+            "run_id": run_id,
+            "pose": pose_name,
+            **_urls_for_run(run_id),
+            **_meta(request),
+        }
+    except Exception as e:
+        _audit(
+            actor="avatar",
+            action="pose_error",
+            ctx={"run_id": run_id},
+            payload={"err": str(e)},
+        )
+        raise HTTPException(500, f"avatar_pose_error: {e}")
+
+
+@router.post("/animate")
+def animate(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    _ok_guard("animate avatar")
+    run_id = str(body.get("run_id") or int(time.time()))
+    clip = str(body.get("clip") or "idle")
+    seconds = int(body.get("seconds") or 2)
+    try:
+        outdir = ART_DIR / run_id
+        outdir.mkdir(parents=True, exist_ok=True)
+        if animate_avatar is None:
+            raise RuntimeError("avatar_api not available")
+        animate_avatar(clip=clip, seconds=seconds, out_dir=str(outdir))
+        _audit(
+            actor="avatar",
+            action="animate",
+            ctx={"run_id": run_id},
+            payload={"clip": clip, "seconds": seconds},
+        )
+        return {
+            "ok": True,
+            "run_id": run_id,
+            "clip": clip,
+            "seconds": seconds,
+            **_urls_for_run(run_id),
+            **_meta(request),
+        }
+    except Exception as e:
+        _audit(
+            actor="avatar",
+            action="animate_error",
+            ctx={"run_id": run_id},
+            payload={"err": str(e)},
+        )
+        raise HTTPException(500, f"avatar_animate_error: {e}")
+
+
+@router.get("/artifacts/{run_id}")
+def artifacts(run_id: str, request: Request) -> Dict[str, Any]:
+    outdir = ART_DIR / run_id
+    if not outdir.exists():
+        raise HTTPException(404, "not_found")
+    info = _urls_for_run(run_id)
+    return {"ok": True, "run_id": run_id, **info, **_meta(request)}

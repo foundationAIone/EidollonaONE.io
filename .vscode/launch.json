@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "E:\\EidollonaONE\\eidollona_env\\Scripts\\python.exe"
+        },
+        {
+            "name": "Python: Auto Refactor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/internet_access/self_update/auto_refactor.py",
+            "console": "integratedTerminal",
+            "python": "E:\\EidollonaONE\\eidollona_env\\Scripts\\python.exe"
+        }
+    ]
+}
