@@ -1,18 +1,22 @@
 """
-Avatar package
+Avatar package (lightweight init).
 
-Keep this package lightweight at import time to avoid pulling heavy optional
-dependencies during simple unit tests (e.g., embodiment controller).
-
-Downstream modules should import subpackages directly, e.g.:
-    from avatar.embodiment.embodiment_controller import EmbodimentController
-
-Heavy integrations under rpm_ecosystem should be imported explicitly by
-consumers that need them, not via package import side-effects.
+Keep __init__ import-light so that submodules like
+`avatar.embodiment.embodiment_controller` can be imported in tests
+without pulling heavy optional dependencies. Heavy integrations under
+`rpm_ecosystem` are imported lazily by their own modules.
 """
 
 __version__ = "1.0.0"
 __author__ = "EidollonaONE Team"
-__description__ = "Eidollona avatar system (lightweight package init)"
+__description__ = "Quantum consciousness-enhanced avatar system"
 
-__all__ = []
+# Intentionally do not import heavy subpackages here.
+# Submodules should be imported directly, e.g.:
+#   from avatar.embodiment.embodiment_controller import EmbodimentController
+
+__all__ = [
+    "__version__",
+    "__author__",
+    "__description__",
+]
