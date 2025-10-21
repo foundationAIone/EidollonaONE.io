@@ -54,9 +54,8 @@ def evm_block_from_rpc(
     gas_used = float(_hex_to_int(block.get("gasUsed")) or 0)
     gas_limit = float(_hex_to_int(block.get("gasLimit")) or 0)
     base_fee_raw = block.get("baseFeePerGas")
-    base_fee = (
-        float(_hex_to_int(base_fee_raw)) / 1e9 if base_fee_raw is not None else None
-    )  # gwei
+    base_fee_int = _hex_to_int(base_fee_raw) if base_fee_raw is not None else None
+    base_fee = float(base_fee_int) / 1e9 if base_fee_int is not None else None  # gwei
     txs_obj = block.get("transactions") or []
     tx_count = (
         len(txs_obj)

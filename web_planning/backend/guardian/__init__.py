@@ -198,16 +198,20 @@ _original_guard_intake = guard_intake
 _original_guard_outbound = guard_outbound
 
 
-def guard_intake(text: str) -> Tuple[bool, Dict[str, Any]]:  # type: ignore[override]
+def guard_intake_wrapped(text: str) -> Tuple[bool, Dict[str, Any]]:
     ok, meta = _original_guard_intake(text)
     _count(ok, "intake")
     return ok, meta
 
 
-def guard_outbound(text: str) -> Tuple[bool, Dict[str, Any]]:  # type: ignore[override]
+def guard_outbound_wrapped(text: str) -> Tuple[bool, Dict[str, Any]]:
     ok, meta = _original_guard_outbound(text)
     _count(ok, "outbound")
     return ok, meta
+
+# Re-export wrapped names publicly
+guard_intake = guard_intake_wrapped
+guard_outbound = guard_outbound_wrapped
 
 
 def metrics() -> Dict[str, Any]:

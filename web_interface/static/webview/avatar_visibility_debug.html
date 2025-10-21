@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Visibility Debug</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 300px;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 5px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #555;
+        }
+        #log {
+            font-family: monospace;
+            font-size: 11px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>🔍 Avatar Visibility Debug</h3>
+        <div id="status">Loading...</div>
+        <div id="log"></div>
+    </div>
+    
+    <div id="controls">
+        <h4>🎮 Camera Controls</h4>
+        <button onclick="zoomOut()">🔍 Zoom Out</button>
+        <button onclick="zoomIn()">🔎 Zoom In</button>
+        <button onclick="moveUp()">⬆️ Look Up</button>
+        <button onclick="moveDown()">⬇️ Look Down</button>
+        <button onclick="resetCamera()">🎯 Reset Camera</button>
+        <button onclick="showWireframe()">📐 Toggle Wireframe</button>
+        <button onclick="addLights()">💡 Add More Lights</button>
+    </div>
+
+    <script src="/webview/static/webview/js/three.min.js"></script>
+    <script src="/webview/static/webview/js/GLTFLoader.js"></script>
+
+    <script>
+        let scene, camera, renderer, avatar, controls_enabled = false;
+        const status = document.getElementById('status');
+        const log = document.getElementById('log');
+        
+        function addLog(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${timestamp}] ${msg}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+            console.log(`[${timestamp}] ${msg}`);
+        }
+
+        function init() {
+            if (typeof THREE === 'undefined') {
+                addLog('❌ Three.js not loaded', 'error');
+                return;
+            }
+
+            addLog('✅ Starting avatar visibility debug...', 'success');
+            
+            // Create scene with different background
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x202020);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+            
+            addLog('✅ Scene setup complete', 'success');
+            
+            // Add comprehensive lighting
+            setupLighting();
+            
+            // Add reference objects
+            addReferenceObjects();
+            
+            // Load avatar
+            loadAvatar();
+            
+            // Start render loop
+            animate();
+            
+            controls_enabled = true;
+            addLog('🎮 Camera controls enabled', 'info');
+        }
+        
+        function setupLighting() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            
+            // Directional light from multiple angles
+            const light1 = new THREE.DirectionalLight(0xffffff, 1.0);
+            light1.position.set(1, 1, 1);
+            light1.castShadow = true;
+            scene.add(light1);
+            
+            const light2 = new THREE.DirectionalLight(0xffffff, 0.5);
+            light2.position.set(-1, 1, -1);
+            scene.add(light2);
+            
+            const light3 = new THREE.DirectionalLight(0xffffff, 0.3);
+            light3.position.set(0, -1, 0);
+            scene.add(light3);
+            
+            addLog('💡 Comprehensive lighting added', 'success');
+        }
+        
+        function addReferenceObjects() {
+            // Add a grid to show scale and position
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+            
+            // Add axis helper
+            const axesHelper = new THREE.AxesHelper(2);
+            scene.add(axesHelper);
+            
+            // Add a reference cube at origin
+            const cubeGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+            const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.name = 'ReferenceCube';
+            scene.add(cube);
+            
+            addLog('📐 Reference objects added (grid, axes, red cube)', 'info');
+        }
+        
+        function loadAvatar() {
+            if (!THREE.GLTFLoader) {
+                addLog('❌ GLTFLoader not available', 'error');
+                return;
+            }
+            
+            const loader = new THREE.GLTFLoader();
+            
+            addLog('📦 Loading avatar...', 'info');
+            
+            loader.load(
+                '/webview/static/models/eidollona.glb',
+                function(gltf) {
+                    addLog('✅ Avatar GLB loaded!', 'success');
+                    
+                    avatar = gltf.scene;
+                    scene.add(avatar);
+                    
+                    // Analyze the avatar
+                    analyzeAvatar(gltf);
+                    
+                    // Try different positioning
+                    positionAvatar();
+                    
+                    addLog('🎭 Avatar added to scene', 'success');
+                },
+                function(progress) {
+                    if (progress.total > 0) {
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        status.textContent = `Loading: ${percent}%`;
+                    }
+                },
+                function(error) {
+                    addLog(`❌ Avatar loading failed: ${error.message}`, 'error');
+                }
+            );
+        }
+        
+        function analyzeAvatar(gltf) {
+            addLog('🔍 Analyzing avatar structure...', 'info');
+            
+            // Calculate bounding box
+            const box = new THREE.Box3().setFromObject(gltf.scene);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            
+            addLog(`📏 Avatar size: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`, 'info');
+            addLog(`📍 Avatar center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`, 'info');
+            
+            // Count objects
+            let meshCount = 0;
+            gltf.scene.traverse(function(child) {
+                if (child.isMesh) {
+                    meshCount++;
+                    addLog(`🎭 Mesh: "${child.name}" - Material: ${child.material.constructor.name}`, 'info');
+                    
+                    // Force visible material
+                    if (child.material) {
+                        child.material.visible = true;
+                        child.material.transparent = false;
+                        child.material.opacity = 1.0;
+                        
+                        // Add emissive color to make it glow
+                        if (child.material.emissive) {
+                            child.material.emissive.setHex(0x222222);
+                        }
+                    }
+                }
+            });
+            
+            addLog(`📊 Found ${meshCount} meshes`, 'success');
+            
+            // Position camera to see the avatar
+            const distance = Math.max(size.x, size.y, size.z) * 3;
+            camera.position.set(distance, center.y + size.y/2, distance);
+            camera.lookAt(center);
+            
+            addLog(`📷 Camera positioned at distance ${distance.toFixed(2)}`, 'info');
+        }
+        
+        function positionAvatar() {
+            if (!avatar) return;
+            
+            // Try multiple positioning strategies
+            avatar.position.set(0, 0, 0);
+            avatar.scale.set(1, 1, 1);
+            avatar.rotation.set(0, 0, 0);
+            
+            addLog('📍 Avatar positioned at origin', 'info');
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Slow rotation for better visibility
+            if (avatar) {
+                avatar.rotation.y += 0.002;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Camera control functions
+        function zoomOut() {
+            if (!controls_enabled) return;
+            camera.position.multiplyScalar(1.5);
+            addLog('🔍 Zoomed out', 'info');
+        }
+        
+        function zoomIn() {
+            if (!controls_enabled) return;
+            camera.position.multiplyScalar(0.7);
+            addLog('🔎 Zoomed in', 'info');
+        }
+        
+        function moveUp() {
+            if (!controls_enabled) return;
+            camera.position.y += 1;
+            addLog('⬆️ Camera moved up', 'info');
+        }
+        
+        function moveDown() {
+            if (!controls_enabled) return;
+            camera.position.y -= 1;
+            addLog('⬇️ Camera moved down', 'info');
+        }
+        
+        function resetCamera() {
+            if (!controls_enabled) return;
+            camera.position.set(5, 2, 5);
+            camera.lookAt(0, 0, 0);
+            addLog('🎯 Camera reset', 'success');
+        }
+        
+        function showWireframe() {
+            if (!avatar) return;
+            
+            avatar.traverse(function(child) {
+                if (child.isMesh && child.material) {
+                    child.material.wireframe = !child.material.wireframe;
+                }
+            });
+            addLog('📐 Wireframe toggled', 'info');
+        }
+        
+        function addLights() {
+            // Add more dramatic lighting
+            const spotlight = new THREE.SpotLight(0xffffff, 2.0);
+            spotlight.position.set(0, 5, 0);
+            spotlight.target.position.set(0, 0, 0);
+            scene.add(spotlight);
+            scene.add(spotlight.target);
+            
+            addLog('💡 Spotlight added', 'success');
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Start when loaded
+        window.addEventListener('load', function() {
+            setTimeout(init, 500);
+        });
+    </script>
+</body>
+</html>

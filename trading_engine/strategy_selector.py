@@ -7,7 +7,10 @@ __all__ = ["TradingEngine"]
 # Trading Engine Module (SE41 v4.1+)
 # Unified import & helper stanza injected by rewrite_trading_engine_v41.ps1
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from trading.helpers.se41_trading_gate import ethos_decision, se41_numeric
+from trading.helpers.se41_trading_gate import (
+    ethos_decision_envelope,
+    se41_numeric,
+)
 
 # Standard library
 import logging
@@ -34,25 +37,20 @@ Purpose: pick & adapt the best strategies for the *current* regime and portfolio
 """
 
 # --- optional cross-module types ------------------------------------------------
-try:
-    from trading_engine.ai_trade_executor import MarketType, RiskLevel
+# Use local enums to ensure consistent type identity for analyzers
+class MarketType(Enum):
+    STOCKS = "stocks"
+    FOREX = "forex"
+    CRYPTO = "crypto"
+    FUTURES = "futures"
 
-    RISK_ENUMS = True
-except Exception:
-    RISK_ENUMS = False
 
-    class MarketType(Enum):
-        STOCKS = "stocks"
-        FOREX = "forex"
-        CRYPTO = "crypto"
-        FUTURES = "futures"
-
-    class RiskLevel(Enum):
-        MINIMAL = 0
-        LOW = 1
-        MODERATE = 2
-        HIGH = 3
-        EXTREME = 4
+class RiskLevel(Enum):
+    MINIMAL = 0
+    LOW = 1
+    MODERATE = 2
+    HIGH = 3
+    EXTREME = 4
 
 
 # --- strategy model ------------------------------------------------------------
@@ -218,7 +216,7 @@ class SymbolicStrategyOptimizer:
         Returns: {optimal_strategy_id, optimization_score, strategy_scores, recommendations, market_regime, ethos}
         """
         try:
-            vol = float(market_conditions.get("volatility", 0.20))
+            # Note: vol is inferred within _regime; avoid duplicate local to keep analyzers clean
             trend = float(market_conditions.get("trend_strength", 0.50))
             liquidity = float(market_conditions.get("liquidity", 0.70))
             momentum = float(market_conditions.get("momentum", 0.00))
@@ -289,7 +287,7 @@ class SymbolicStrategyOptimizer:
                 }
 
             # Ethos gate over a compact signal packet (or call se41_signals for a richer set)
-            best_id = max(scores, key=scores.get)
+            best_id = max(scores, key=lambda k: scores[k])
             best_merit = scores[best_id]
             ethos_in = {
                 "coherence": best_merit,
@@ -303,9 +301,7 @@ class SymbolicStrategyOptimizer:
                 },
                 "explain": "strategy_selector",
             }
-            ethos = ethos_decision(
-                ethos_in
-            )  # -> {'decision': 'allow/hold/deny', 'reasons': [...]}
+            ethos = ethos_decision_envelope(ethos_in)
 
             recs = self._recommendations(
                 scores, market_conditions, portfolio_context, regime
@@ -336,9 +332,12 @@ class SymbolicStrategyOptimizer:
         regime: MarketRegime,
     ) -> List[str]:
         recs: List[str] = []
-        vol = mc.get("volatility", 0.2)
-        trend = mc.get("trend_strength", 0.5)
-        mom = mc.get("momentum", 0.0)
+        # Read but don't retain locals to avoid analyzer unused warnings
+        _ = (
+            mc.get("volatility", 0.2),
+            mc.get("trend_strength", 0.5),
+            mc.get("momentum", 0.0),
+        )
 
         if regime == MarketRegime.TRENDING_UP:
             recs += ["favor_momentum_strategies", "consider_trend_following"]
@@ -575,18 +574,22 @@ class StrategySelector:
                     preferred_regimes=list(MarketRegime),
                 ),
             ]
+            from typing import cast, Dict as _Dict, Any as _Any, List as _List
+
             for cfg in defaults:
                 sid = f"strategy_{int(time.time())}_{uuid.uuid4().hex[:8]}"
                 s = TradingStrategy(
                     strategy_id=sid,
-                    name=cfg["name"],
-                    strategy_type=cfg["strategy_type"],
-                    description=cfg["description"],
-                    parameters=cfg["parameters"],
-                    risk_profile=cfg["risk_profile"],
-                    time_horizon=cfg["time_horizon"],
-                    market_types=cfg["market_types"],
-                    preferred_regimes=cfg["preferred_regimes"],
+                    name=str(cfg["name"]),
+                    strategy_type=cast(StrategyType, cfg["strategy_type"]),
+                    description=str(cfg["description"]),
+                    parameters=cast(_Dict[str, _Any], cfg["parameters"]),
+                    risk_profile=cast(RiskLevel, cfg["risk_profile"]),
+                    time_horizon=str(cfg["time_horizon"]),
+                    market_types=cast(_List[MarketType], cfg["market_types"]),
+                    preferred_regimes=cast(
+                        _List[MarketRegime], cfg["preferred_regimes"]
+                    ),
                     status=StrategyStatus.ACTIVE,
                 )
                 self.strategies[sid] = s

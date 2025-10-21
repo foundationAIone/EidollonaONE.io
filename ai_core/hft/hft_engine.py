@@ -26,7 +26,7 @@ from .latency_arbitrage import LatencyArbitrageModel
 
 try:  # pragma: no cover
     from symbolic_core.symbolic_equation41 import SymbolicEquation41, SE41Signals  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
 except Exception:  # pragma: no cover
 
     class SE41Signals:  # stub
@@ -77,7 +77,7 @@ class HFTEngine:
     ) -> None:
         if seed is not None:
             random.seed(seed)
-        self.symbolic = symbolic or SymbolicEquation41()
+        self.symbolic: Any = symbolic or SymbolicEquation41()
         self.sniffer = PacketSniffer(window=200, symbolic=self.symbolic)
         self.coloc = CoLocationManager(symbolic=self.symbolic)
         self.micro = MicrostructureAnalyzer(window=180, symbolic=self.symbolic)

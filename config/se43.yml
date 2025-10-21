@@ -1,0 +1,30 @@
+se_version: 4.3
+base_mode: lotus12
+chakra8_online: true
+audit_ndjson: true
+
+alignment:
+  gamma: 0.7
+  verified_only: true
+
+assimilation:
+  sensors: consented_only
+  internet: verified_only
+
+wings:
+  cognition: on
+  omega_max: 0.06
+  avatar_visibility: auto
+
+transcendence:
+  nature: true
+  wing_use_policy:
+    override: auto
+    show_if: { readiness: prime_ready, wings_min: 1.03, ra_min: 0.95, risk_max: 0.06 }
+    hide_if: { operator_focus: true, risk_over: 0.08 }
+
+gate_12: [1,1,1,1,1,1,1,1,1,1,1,1]
+
+human_compat: { smoothing_halflife_sec: 480, phi_echo: true }
+quantum: { total_ms: 1200, power_cap_watts: 60 }
+telemetry: { api: enabled, route: /api/hud/signals }

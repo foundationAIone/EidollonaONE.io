@@ -74,7 +74,7 @@ class Task:
     task_type: str
     description: str
     priority: TaskPriority
-    parameters: Dict[str, Any]
+    parameters: Any
     dependencies: List[str] = field(default_factory=list)
     estimated_duration: float = 0.0  # seconds
     deadline: Optional[datetime] = None
@@ -535,7 +535,7 @@ class AutonomousBot(ABC):
         # Bot's learning rate
         learning_factors.append(self.capabilities.learning_rate)
 
-        return np.mean(learning_factors)
+        return float(np.mean(learning_factors))
 
     def optimize_resource_usage(self, task: Task) -> Dict[str, float]:
         """Optimize resource usage for task"""
@@ -573,11 +573,11 @@ class AutonomousBot(ABC):
 
         # Check result structure
         required_fields = ["status", "output"]
-        for field in required_fields:
-            if field not in result:
+        for req_field in required_fields:
+            if req_field not in result:
                 validation["quality_score"] -= 0.2
                 validation["validation_notes"].append(
-                    f"Missing required field: {field}"
+                    f"Missing required field: {req_field}"
                 )
 
         # Consciousness-informed validation
@@ -655,7 +655,7 @@ class AutonomousBot(ABC):
         structure_score = 1.0 if isinstance(result, dict) else 0.5
         quality_factors.append(structure_score)
 
-        return np.mean(quality_factors)
+        return float(np.mean(quality_factors))
 
     async def complete_task(self, task: Task, result: Dict[str, Any]):
         """Complete a task with results"""

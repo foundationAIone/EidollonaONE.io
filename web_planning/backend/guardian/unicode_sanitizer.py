@@ -5,6 +5,7 @@ import json
 import unicodedata
 import re
 from typing import Dict, Any, Tuple, List, Set
+from typing import Literal
 
 from . import audit as _audit_mod
 
@@ -120,14 +121,13 @@ def sanitize_and_score(text: str) -> Tuple[str, Dict[str, Any]]:
 
     text = text or ""
     try:
-        norm = unicodedata.normalize(
-            (
-                normalization
-                if normalization in {"NFC", "NFKC", "NFD", "NFKD"}
-                else "NFKC"
-            ),
-            text,
-        )
+        # Constrain to valid normalization forms for type-checkers
+        norm_form: Literal['NFC','NFKC','NFD','NFKD']
+        if normalization in {"NFC", "NFKC", "NFD", "NFKD"}:
+            norm_form = normalization  # type: ignore[assignment]
+        else:
+            norm_form = "NFKC"  # type: ignore[assignment]
+        norm = unicodedata.normalize(norm_form, text)  # type: ignore[arg-type]
     except Exception:
         norm = unicodedata.normalize("NFKC", text)
 

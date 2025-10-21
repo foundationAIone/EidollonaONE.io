@@ -50,12 +50,10 @@ def _audit_deprecated_import() -> None:
         from common.audit_chain import append_event as _append_event  # type: ignore
 
         _append_event(
-            {
-                "actor": "system",
-                "action": "deprecated_import",
-                "context": {"module": "dashboard", "shim_mode": _SHIM_MODE},
-                "payload_digest": "dashboard",  # we don’t log PII; content is static
-            }
+            actor="system",
+            action="deprecated_import",
+            ctx={"module": "dashboard", "shim_mode": _SHIM_MODE},
+            payload={"module": "dashboard"},
         )
     except Exception as e:
         # Don’t fail imports because audit isn’t available yet
@@ -79,7 +77,8 @@ except Exception as e:
     ) from e
 
 # Build __all__ from the canonical module’s public symbols
-__all__ = [name for name in dir(_backend) if not name.startswith("_")]
+_exports = tuple(n for n in dir(_backend) if not n.startswith("_"))
+__all__ = _exports  # pyright: ignore[reportUnsupportedDunderAll]
 
 # Re-export every public attribute
 for _name in __all__:
@@ -92,14 +91,4 @@ __canonical__ = _CANON_PATH
 del (
     _imp,
     _backend,
-    _name,
-    _os,
-    _warnings,
-    _logging,
-    _log,
-    _MSG,
-    _SHIM_MODE,
-    _CANON_PATH,
-    _audit_deprecated_import,
-    _emit_warning_once,
 )

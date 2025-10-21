@@ -32,7 +32,6 @@ from trading.helpers.se41_trading_gate import se41_signals, ethos_decision, se41
 
 try:
     from trading_engine.ai_trade_executor import (
-        AITradeExecutor,
         create_ai_trade_executor,
     )
 
@@ -42,10 +41,7 @@ except ImportError:
 
 try:
     from trading_engine.autonomous_portfolio_manager import (
-        AutonomousPortfolioManager,
         create_portfolio_manager,
-        AllocationStrategy,
-        AssetClass,
     )
 
     PORTFOLIO_MANAGER_AVAILABLE = True
@@ -54,10 +50,7 @@ except ImportError:
 
 try:
     from trading_engine.market_intelligence_analyzer import (
-        MarketIntelligenceAnalyzer,
         create_market_analyzer,
-        MarketTrend,
-        MarketSentiment,
     )
 
     MARKET_ANALYZER_AVAILABLE = True
@@ -271,13 +264,13 @@ class FinancialAutonomyEngine:
         # Subsystems
         self.symbolic_validator = SymbolicFinancialValidator()
         self.trade_executor = (
-            create_ai_trade_executor() if TRADE_EXECUTOR_AVAILABLE else None
+            create_ai_trade_executor() if TRADE_EXECUTOR_AVAILABLE else None  # type: ignore[name-defined]
         )
         self.portfolio_manager = (
-            create_portfolio_manager() if PORTFOLIO_MANAGER_AVAILABLE else None
+            create_portfolio_manager() if PORTFOLIO_MANAGER_AVAILABLE else None  # type: ignore[name-defined]
         )
         self.market_analyzer = (
-            create_market_analyzer() if MARKET_ANALYZER_AVAILABLE else None
+            create_market_analyzer() if MARKET_ANALYZER_AVAILABLE else None  # type: ignore[name-defined]
         )
 
         # Performance tracking
@@ -323,7 +316,7 @@ class FinancialAutonomyEngine:
             FinancialStatus.PAUSED,
         ):
             try:
-                sig = se41_signals()
+                sig = se41_signals() or {}
                 metrics = await self._calculate_financial_metrics()
                 self.metrics_history.append(metrics)
 

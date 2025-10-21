@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Avatar Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        #debug-log {
+            background: #2a2a3e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        #avatar-canvas {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #0f3460;
+            background: #000;
+            display: block;
+        }
+        button {
+            background: #0f3460;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #16213e;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Avatar Debug Console</h1>
+    
+    <div id="debug-log"></div>
+    
+    <canvas id="avatar-canvas"></canvas>
+    
+    <div>
+        <button onclick="startDebug()">🚀 Start Debug Process</button>
+        <button onclick="clearLog()">🗑️ Clear Log</button>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#00ff00',
+                error: '#ff0000',
+                warning: '#ffaa00',
+                success: '#00aa00'
+            };
+            debugLog.innerHTML += `<div style="color: ${colors[type]}">[${timestamp}] ${message}</div>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+        }
+
+        function startDebug() {
+            log('🔄 Starting avatar debug process...', 'info');
+            checkThreeJS();
+        }
+
+        function checkThreeJS() {
+            log('Step 1: Checking Three.js availability...', 'info');
+            
+            if (typeof THREE !== 'undefined') {
+                log('✅ Three.js is loaded! Version info:', 'success');
+                log(`   - THREE object exists: ${typeof THREE}`, 'info');
+                log(`   - WebGLRenderer: ${typeof THREE.WebGLRenderer}`, 'info');
+                log(`   - Scene: ${typeof THREE.Scene}`, 'info');
+                log(`   - GLTFLoader: ${typeof THREE.GLTFLoader}`, 'info');
+                checkWebGL();
+            } else {
+                log('❌ Three.js is not loaded. Loading now...', 'error');
+                loadThreeJS();
+            }
+        }
+
+        function loadThreeJS() {
+            log('📦 Loading Three.js from local file...', 'info');
+            const script = document.createElement('script');
+            script.src = '/webview/static/webview/js/three.min.js';
+            script.onload = function() {
+                log('✅ Three.js loaded successfully!', 'success');
+                loadGLTFLoader();
+            };
+            script.onerror = function() {
+                log('❌ Failed to load local Three.js, trying CDN...', 'error');
+                loadThreeJSFromCDN();
+            };
+            document.head.appendChild(script);
+        }
+
+        function loadThreeJSFromCDN() {
+            log('📦 Loading Three.js from CDN...', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/three@0.158.0/build/three.min.js';
+            script.onload = function() {
+                log('✅ Three.js loaded from CDN!', 'success');
+                loadGLTFLoader();
+            };
+            script.onerror = function() {
+                log('❌ Failed to load Three.js from CDN', 'error');
+            };
+            document.head.appendChild(script);
+        }
+
+        function loadGLTFLoader() {
+            log('📦 Loading GLTFLoader...', 'info');
+            const script = document.createElement('script');
+            script.src = '/webview/static/webview/js/GLTFLoader.js';
+            script.onload = function() {
+                log('✅ GLTFLoader loaded successfully!', 'success');
+                setTimeout(checkWebGL, 100); // Small delay to ensure everything is ready
+            };
+            script.onerror = function() {
+                log('❌ Failed to load local GLTFLoader, trying CDN...', 'error');
+                loadGLTFLoaderFromCDN();
+            };
+            document.head.appendChild(script);
+        }
+
+        function loadGLTFLoaderFromCDN() {
+            log('📦 Loading GLTFLoader from CDN...', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/three@0.158.0/examples/js/loaders/GLTFLoader.js';
+            script.onload = function() {
+                log('✅ GLTFLoader loaded from CDN!', 'success');
+                setTimeout(checkWebGL, 100);
+            };
+            script.onerror = function() {
+                log('❌ Failed to load GLTFLoader from CDN', 'error');
+            };
+            document.head.appendChild(script);
+        }
+
+        function checkWebGL() {
+            log('Step 2: Checking WebGL support...', 'info');
+            
+            const canvas = document.getElementById('avatar-canvas');
+            try {
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    log('✅ WebGL is supported!', 'success');
+                    log(`   - Vendor: ${gl.getParameter(gl.VENDOR)}`, 'info');
+                    log(`   - Renderer: ${gl.getParameter(gl.RENDERER)}`, 'info');
+                    initializeThreeJS();
+                } else {
+                    log('❌ WebGL is not supported', 'error');
+                }
+            } catch (e) {
+                log(`❌ WebGL error: ${e.message}`, 'error');
+            }
+        }
+
+        function initializeThreeJS() {
+            log('Step 3: Initializing Three.js scene...', 'info');
+            
+            try {
+                const canvas = document.getElementById('avatar-canvas');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+                
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                renderer.setClearColor(0x222222);
+                
+                // Add some lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
+                
+                camera.position.z = 5;
+                
+                log('✅ Three.js scene initialized!', 'success');
+                log(`   - Scene: ${scene.constructor.name}`, 'info');
+                log(`   - Camera: ${camera.constructor.name}`, 'info');
+                log(`   - Renderer: ${renderer.constructor.name}`, 'info');
+                
+                // Test render
+                renderer.render(scene, camera);
+                log('✅ Test render successful!', 'success');
+                
+                loadAvatar(scene, camera, renderer);
+                
+            } catch (e) {
+                log(`❌ Three.js initialization error: ${e.message}`, 'error');
+                console.error(e);
+            }
+        }
+
+        function loadAvatar(scene, camera, renderer) {
+            log('Step 4: Loading GLB avatar...', 'info');
+            
+            if (!THREE.GLTFLoader) {
+                log('❌ GLTFLoader not available', 'error');
+                return;
+            }
+            
+            const loader = new THREE.GLTFLoader();
+            const avatarUrl = '/webview/static/models/eidollona.glb';
+            
+            log(`📁 Loading avatar from: ${avatarUrl}`, 'info');
+            
+            loader.load(
+                avatarUrl,
+                function(gltf) {
+                    log('✅ GLB loaded successfully!', 'success');
+                    log(`   - Scene children: ${gltf.scene.children.length}`, 'info');
+                    log(`   - Animations: ${gltf.animations.length}`, 'info');
+                    
+                    // Add the avatar to the scene
+                    scene.add(gltf.scene);
+                    
+                    // Position and scale the avatar
+                    gltf.scene.position.set(0, -1, 0);
+                    gltf.scene.scale.set(1, 1, 1);
+                    
+                    log('✅ Avatar added to scene!', 'success');
+                    
+                    // Render the scene
+                    renderer.render(scene, camera);
+                    log('✅ Final render complete!', 'success');
+                    
+                    // Start animation loop
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        gltf.scene.rotation.y += 0.01; // Slow rotation
+                        renderer.render(scene, camera);
+                    }
+                    animate();
+                    log('🔄 Animation loop started!', 'success');
+                },
+                function(progress) {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    log(`📊 Loading progress: ${percent}%`, 'info');
+                },
+                function(error) {
+                    log(`❌ GLB loading error: ${error.message}`, 'error');
+                    console.error('GLB loading error:', error);
+                }
+            );
+        }
+
+        // Auto-start on page load
+        window.addEventListener('load', function() {
+            log('🌟 Page loaded, starting debug in 1 second...', 'info');
+            setTimeout(startDebug, 1000);
+        });
+    </script>
+</body>
+</html>

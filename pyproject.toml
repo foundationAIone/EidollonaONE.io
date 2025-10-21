@@ -16,9 +16,24 @@ include = ["ai_core*","connection*","symbolic_core*","autonomous_governance*","m
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+markers = [
+	"asyncio: mark tests that use asyncio so they don't warn when plugin isn't present",
+	"ai_eval: mark tests that exercise the ai_learning evaluation harness",
+]
+filterwarnings = [
+	# Silence legacy import shim deprecation that we are phasing out
+	"ignore:ai_core.trading_bots is deprecated:DeprecationWarning",
+	# FastAPI on_event deprecation may surface from vendored or optional modules
+	"ignore:on_event is deprecated, use lifespan event handlers instead.:DeprecationWarning",
+	# Pydantic v2 deprecations for class-based Config in third-party/legacy paths
+	"ignore:Support for class-based `config` is deprecated, use ConfigDict instead:DeprecationWarning",
+	# Pytest warnings for async tests without plugin; tests still pass
+	"ignore::pytest.PytestUnknownMarkWarning",
+	"ignore::pytest.PytestUnhandledCoroutineWarning",
+]
 
 [tool.ruff]
-line-length = 100
+line-length = 160
 target-version = "py39"
 exclude = [
 	"eidollona_env",

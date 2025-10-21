@@ -1,0 +1,81 @@
+﻿{
+    "folders":  [
+                    {
+                        "path":  "web_interface"
+                    },
+                    {
+                        "path":  "scripts"
+                    },
+                    {
+                        "path":  "config"
+                    },
+                    {
+                        "path":  "bots"
+                    },
+                    {
+                        "path":  "symbolic_core"
+                    },
+                    {
+                        "path":  "trading_engine"
+                    },
+                    {
+                        "path":  "algorithms"
+                    }
+                ],
+    "settings":  {
+                     "files.watcherExclude":  {
+                                                  "**/node_modules/**":  true,
+                                                  ".ruff_cache/**":  true,
+                                                  "**/__pycache__/**":  true,
+                                                  "**/logs/**":  true,
+                                                  "**/.venv/**":  true,
+                                                  "**/target/**":  true,
+                                                  "**/dist/**":  true,
+                                                  "**/build/**":  true,
+                                                  ".mypy_cache/**":  true,
+                                                  ".pytest_cache/**":  true,
+                                                  "**/venv/**":  true,
+                                                  "**/assets/**":  true,
+                                                  "**/env/**":  true,
+                                                  "**/.git/**":  true,
+                                                  "**/out/**":  true,
+                                                  "**/data/**":  true,
+                                                  ".cache/**":  true
+                                              },
+                     "typescript.tsserver.maxTsServerMemory":  2048,
+                     "search.exclude":  {
+                                            "**/node_modules/**":  true,
+                                            ".ruff_cache/**":  true,
+                                            "**/__pycache__/**":  true,
+                                            "**/logs/**":  true,
+                                            "**/.venv/**":  true,
+                                            "**/target/**":  true,
+                                            "**/dist/**":  true,
+                                            "**/build/**":  true,
+                                            ".mypy_cache/**":  true,
+                                            ".pytest_cache/**":  true,
+                                            "**/venv/**":  true,
+                                            "**/assets/**":  true,
+                                            "**/env/**":  true,
+                                            "**/.git/**":  true,
+                                            "**/out/**":  true,
+                                            "**/data/**":  true,
+                                            ".cache/**":  true
+                                        },
+                     "git.countBadge":  "off",
+                     "python.analysis.userFileIndexingLimit":  1000,
+                     "git.untrackedChanges":  "hidden",
+                     "search.followSymlinks":  false,
+                     "typescript.tsserver.experimental.enableProjectDiagnostics":  false,
+                     "git.enabled":  false,
+                     "python.analysis.indexing":  false,
+                     "python.analysis.typeCheckingMode":  "off",
+                     "python.defaultInterpreterPath":  "C:\\Program Files\\Python39\\python.exe",
+                     "git.ignoreLimitWarning":  true,
+                     "scm.alwaysShowProviders":  false,
+                     "git.autorefresh":  false,
+                     "files.maxMemoryForLargeFilesMB":  256,
+                     "git.decorations.enabled":  false,
+                     "workbench.startupEditor":  "none"
+                 }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 3,
+  "requesterUsername": "foundationAIone",
+  "requesterAvatarIconUri": {
+    "$mid": 1,
+    "path": "/u/170805149",
+    "scheme": "https",
+    "authority": "avatars.githubusercontent.com",
+    "query": "v=4"
+  },
+  "responderUsername": "GitHub Copilot",
+  "responderAvatarIconUri": {
+    "id": "copilot"
+  },
+  "initialLocation": "panel",
+  "requests": [],
+  "sessionId": "e94b8cf3-6b83-41e6-98ef-43ece939ddc8",
+  "creationDate": 1761047855425,
+  "isImported": false,
+  "lastMessageDate": 1761047855425
+}

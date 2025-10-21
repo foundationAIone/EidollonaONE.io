@@ -235,7 +235,7 @@ class MarketIntelligenceAnalyzer:
     # classification
     def _trend_regime(
         self, features: Dict[str, Any], se: Dict[str, Any]
-    ) -> (MarketTrend, MarketRegime):
+    ) -> tuple[MarketTrend, MarketRegime]:
         vol = float(features["realized_vol"])
         mom = float(features["momentum"])
         brd = float(features["breadth"])

@@ -1,0 +1,21 @@
+version: 1
+mode: paper
+venues:
+  - { id: kraken,   maker_bps: 2.0, taker_bps: 5.0 }
+  - { id: coinbase, maker_bps: 2.5, taker_bps: 6.0 }
+whitelist:
+  symbols: [BTC/USD, ETH/USD]
+  strategies: [momentum, mean_reversion, arbitrage_cross]
+risk:
+  max_leverage: 1.0
+  max_order_notional_usd: 100
+  max_position_notional_usd: 400
+  max_open_positions: 4
+  max_orders_per_min: 4
+  max_daily_loss_usd: 20
+kill_switch: { drawdown_usd: 40, triggers: [daily_loss, heartbeat_miss, venue_latency] }
+schedule: { allow_hours_utc: ["00:00-24:00"] }
+orders: { default_tif: IOC, ttl_seconds: 45 }
+arbitrage: { min_edge_bps: 15, taker_cap_bps: 50 }
+audit: { ndjson: true }
+consent: { trading: on }

@@ -21,50 +21,60 @@ from pathlib import Path
 
 # Core imports with fallback handling
 try:
-    from symbolic_core.symbolic_equation import Reality, SymbolicEquation
+    # Use shim for runtime; keep local class names for typing stability
+    from symbolic_core.symbolic_equation41 import Reality as _Reality  # type: ignore
+    from symbolic_core.symbolic_equation41 import SymbolicEquation41 as _SymbolicEquation  # type: ignore
+    Reality = _Reality  # type: ignore
+    SymbolicEquation = _SymbolicEquation  # type: ignore
 
     SYMBOLIC_CORE_AVAILABLE = True
 except ImportError:
     SYMBOLIC_CORE_AVAILABLE = False
 
-    class Reality:
+    class _Reality:
         def reality_manifestation(self, **kwargs):
             return 42.0
 
-    class SymbolicEquation:
+    class _SymbolicEquation:
         def get_current_state_summary(self):
             return {"coherence": 0.85}
 
 
 try:
-    from connection.wifi_connect import EnhancedWiFiManager
-
+    from connection.wifi_connect import EnhancedWiFiManager as _EnhancedWiFiManager  # type: ignore
     ENHANCED_WIFI_AVAILABLE = True
-except ImportError:
+except Exception:
     ENHANCED_WIFI_AVAILABLE = False
+    class _EnhancedWiFiManager:  # type: ignore
+        def scan_networks(self):
+            return []
+        def connect_to_network(self, *args, **kwargs):
+            return {"success": False}
+        def disconnect(self):
+            return {"success": True}
 
 try:
-    from connection.identity_verifier import IdentityVerificationEngine
-
+    from connection.identity_verifier import (
+        IdentityVerificationEngine as _IdentityVerificationEngine,
+    )  # type: ignore
     IDENTITY_VERIFIER_AVAILABLE = True
-except ImportError:
+except Exception:
     IDENTITY_VERIFIER_AVAILABLE = False
+    _IdentityVerificationEngine = None  # type: ignore
 
 try:
-    from connection.credential_manager import CredentialManager
-
+    from connection.credential_manager import CredentialManager as _CredentialManager  # type: ignore
     CREDENTIAL_MANAGER_AVAILABLE = True
-except ImportError:
+except Exception:
     CREDENTIAL_MANAGER_AVAILABLE = False
+    _CredentialManager = None  # type: ignore
 
 try:
-    from ai_core.quantum_core.quantum_driver import QuantumDriver
-
+    from ai_core.quantum_core.quantum_driver import QuantumDriver as _QuantumDriver  # type: ignore
     QUANTUM_DRIVER_AVAILABLE = True
-except ImportError:
+except Exception:
     QUANTUM_DRIVER_AVAILABLE = False
-
-    class QuantumDriver:
+    class _QuantumDriver:  # type: ignore
         def get_quantum_state(self):
             return {"coherence": 0.9}
 
@@ -73,10 +83,29 @@ except ImportError:
 try:
     import subprocess
     import platform
-
     SYSTEM_NETWORK_AVAILABLE = True
-except ImportError:
+except Exception:
     SYSTEM_NETWORK_AVAILABLE = False
+    # Define minimal stubs so references are safe
+    class _PlatformStub:
+        def system(self):
+            return "unknown"
+    platform = _PlatformStub()  # type: ignore
+    class _SubprocessStub:  # type: ignore
+        class TimeoutExpired(Exception):
+            pass
+        def run(self, *args, **kwargs):
+            class R:
+                returncode = 1
+                stdout = ""
+            return R()
+    subprocess = _SubprocessStub()  # type: ignore
+
+    # Public aliases for optional components
+    EnhancedWiFiManager = _EnhancedWiFiManager  # type: ignore
+    IdentityVerificationEngine = _IdentityVerificationEngine  # type: ignore
+    CredentialManager = _CredentialManager  # type: ignore
+    QuantumDriver = _QuantumDriver  # type: ignore
 
 
 # Connection structures
@@ -466,7 +495,7 @@ class WiFiConnector:
             self.enhanced_wifi_active = False
 
         # Initialize identity verifier if available
-        if IDENTITY_VERIFIER_AVAILABLE:
+        if IDENTITY_VERIFIER_AVAILABLE and IdentityVerificationEngine is not None:
             try:
                 self.identity_verifier = IdentityVerificationEngine()
             except Exception as e:
@@ -476,7 +505,7 @@ class WiFiConnector:
             self.identity_verifier = None
 
         # Initialize credential manager
-        if CREDENTIAL_MANAGER_AVAILABLE:
+        if CREDENTIAL_MANAGER_AVAILABLE and CredentialManager is not None:
             try:
                 self.credential_manager = CredentialManager()
             except Exception as e:
@@ -948,7 +977,7 @@ def test_wifi_connector() -> bool:
                     logger.info("✅ Connection status test passed")
 
                     # Test trusted networks
-                    trusted = connector.get_trusted_networks()
+                    _ = connector.get_trusted_networks()
                     logger.info("✅ Trusted networks test passed")
 
                     # Test disconnection
@@ -961,7 +990,7 @@ def test_wifi_connector() -> bool:
         return True  # Still consider operational
 
     except Exception as e:
-        logger.error(f"WiFi connector test failed: {e}")
+        logging.getLogger(f"{__name__}.test").error(f"WiFi connector test failed: {e}")
         return False
 
 

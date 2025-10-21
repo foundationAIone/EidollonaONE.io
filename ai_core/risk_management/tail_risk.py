@@ -21,7 +21,7 @@ import math
 
 try:  # pragma: no cover
     from symbolic_core.symbolic_equation41 import SymbolicEquation41, SE41Signals  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
 except Exception:  # pragma: no cover
 
     class SE41Signals:

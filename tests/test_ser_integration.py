@@ -15,19 +15,14 @@ def test_mirror_reflect_appends_jsonl(tmp_path, monkeypatch):
         app = planning_create_app()
     except Exception:
         try:
-            from web_interface.backend.main import create_app as web_create_app
+            from web_interface.server.main import app as web_app
 
-            app = web_create_app()
+            app = web_app
         except Exception:
             # Fallback: import prebuilt app, relying on startup hook
-            try:
-                from web_planning.backend.main import app as planning_app
+            from web_planning.backend.main import app as planning_app
 
-                app = planning_app
-            except Exception:
-                from web_interface.backend.main import app as web_app
-
-                app = web_app
+            app = planning_app
 
     # Ensure path clean
     if ser_path.exists():

@@ -52,7 +52,9 @@ class TradeSignalEngine:
         trend = float(sum(changes[-5:]))  # last window cumulative change
         momentum = float(changes[-1])
         # Clamp to [-1,1]
-        clamp = lambda x: max(-1.0, min(1.0, x))
+        def clamp(x: float) -> float:
+            return max(-1.0, min(1.0, x))
+
         return {
             "volatility": clamp(vol),
             "trend": clamp(trend),
@@ -87,8 +89,9 @@ class TradeSignalEngine:
             coherence_hint=coherence_hint,
             risk_hint=risk_hint,
             uncertainty_hint=uncertainty_hint,
-            extras={"market": features, **(extras or {}), **(ctx or {})},
         )
+        combined_extras = {"market": features, **(extras or {}), **(ctx or {})}
+        ctx_payload.update(combined_extras)
         se = self.symbolic.evaluate(ctx_payload)  # returns SE41Signals
 
         # Decision heuristic:

@@ -1,0 +1,64 @@
+{
+  "version": 7,
+  "widgets": [
+    {
+      "id": "w_emp_guard_status",
+      "type": "table",
+      "title": "EMP Guard Posture",
+      "columns": [
+        {
+          "key": "category",
+          "label": "Category"
+        },
+        {
+          "key": "status",
+          "label": "Status"
+        }
+      ],
+      "rows": [
+        {
+          "category": "Exposure E1",
+          "status": "medium"
+        },
+        {
+          "category": "Exposure E2",
+          "status": "medium"
+        },
+        {
+          "category": "Exposure E3",
+          "status": "low"
+        },
+        {
+          "category": "Hardening surge_filters",
+          "status": "present"
+        },
+        {
+          "category": "Hardening grounding_review",
+          "status": "due"
+        },
+        {
+          "category": "Hardening line_conditioners",
+          "status": "present"
+        },
+        {
+          "category": "Hardening storage_replication",
+          "status": "healthy"
+        },
+        {
+          "category": "Drills",
+          "status": "last=never / interval=30d"
+        },
+        {
+          "category": "Caps",
+          "status": "cost_usd_max=2000, hours_max=4, energy_kwh_max=500"
+        },
+        {
+          "category": "Note",
+          "status": "rebind skipped"
+        }
+      ],
+      "pageSize": 10,
+      "total": null
+    }
+  ]
+}

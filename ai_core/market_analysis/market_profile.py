@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 import random
+import math
 
 try:  # pragma: no cover
     from symbolic_core.symbolic_equation41 import SymbolicEquation41, SE41Signals  # type: ignore
@@ -103,6 +104,9 @@ class MarketProfile:
             return ProfileMetrics(0, 0, 0, 0, 0, 1.0, se, "empty")
         total = sum(hist)
         probs = [h / total for h in hist]
+        entropy = -sum(p * math.log(max(p, 1e-12)) for p in probs)
+        max_entropy = math.log(len(probs)) if len(probs) > 1 else 1.0
+        normalized_entropy = _clamp01(entropy / max_entropy)
         # POC
         poc_idx = max(range(len(hist)), key=lambda i: hist[i])
         edges = d["edges"]
@@ -141,14 +145,19 @@ class MarketProfile:
         # Hints
         imbalance_width = (vah - val) / (d["max"] - d["min"] + 1e-9)
         risk_hint = _clamp01(0.1 + (kurt / 10.0) + imbalance_width * 0.2)
-        uncertainty_hint = _clamp01(0.2 + abs(balance - 0.7) * 0.8)
-        coherence_hint = _clamp01(0.9 - abs(balance - 0.7) * 0.9)
+        uncertainty_hint = _clamp01(0.2 + abs(balance - 0.7) * 0.5 + normalized_entropy * 0.4)
+        coherence_hint = _clamp01(0.9 - abs(balance - 0.7) * 0.7 - normalized_entropy * 0.2)
         se = self.symbolic.evaluate(
             assemble_se41_context(
                 risk_hint=risk_hint,
                 uncertainty_hint=uncertainty_hint,
                 coherence_hint=coherence_hint,
-                extras={"profile": {"balance": balance}},
+                extras={
+                    "profile": {
+                        "balance": balance,
+                        "entropy": normalized_entropy,
+                    }
+                },
             )
         )
         stability = _clamp01(1.0 - (se.risk + se.uncertainty) / 2.0)

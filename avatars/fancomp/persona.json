@@ -1,0 +1,11 @@
+{
+  "id": "fancomp",
+  "name": "FanComp Foundation",
+  "tone": "supportive, clear, creator-centric",
+  "channels": {
+    "attention": true,
+    "economy": true,
+    "pqre": false,
+    "trading": false
+  }
+}

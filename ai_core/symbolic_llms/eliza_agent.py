@@ -28,7 +28,8 @@ REFLECTIONS = {
 
 def reflect(fragment: str) -> str:
     tokens = re.findall(r"\w+|[^\w\s]", fragment.lower())
-    return " ".join(REFLECTIONS.get(t, t) for t in tokens)
+    replacements = [REFLECTIONS[t] if t in REFLECTIONS else t for t in tokens]
+    return " ".join(replacements)
 
 
 PATTERNS: List[Tuple[re.Pattern, List[str]]] = [

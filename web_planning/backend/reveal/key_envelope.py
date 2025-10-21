@@ -75,7 +75,7 @@ class KeyEnvelope:
     opened_at: Optional[float] = None
     consent_hash: str = ""  # salted HMAC
     artifact_ref: Optional[str] = None  # e.g., run_id, patch path, plan id
-    meta: Dict[str, Any] = None  # free-form metadata
+    meta: Optional[Dict[str, Any]] = None  # free-form metadata
 
     def to_public(self) -> Dict[str, Any]:
         d = asdict(self)

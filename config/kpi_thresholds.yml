@@ -1,0 +1,10 @@
+version: 1
+# Explainability fraction of decisions with reasons (target 1.0; min 0.95)
+explain_rate_min: 0.95
+# Near-threshold HOLD rate should be below this fraction (0.45<=impetus<0.55 & HOLD)
+near_threshold_hold_rate_max: 0.30
+# ALLOW<->HOLD flipping rate should be below this fraction
+flap_rate_max: 0.25
+# Entropy (bits) over last N decisions; warn/crit bands
+entropy_warn_min: 1.10
+entropy_crit_min: 0.90

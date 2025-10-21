@@ -9,8 +9,22 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Iterable
 
 # === Config ===
-AUDIT_DIR = Path(os.getenv("EID_AUDIT_DIR", "web_planning/backend/state/audit"))
+_DEFAULT_AUDIT_DIR = Path("web_planning/backend/state/audit")
+AUDIT_DIR = Path(os.getenv("EID_AUDIT_DIR", str(_DEFAULT_AUDIT_DIR)))
 AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _audit_dir() -> Path:
+    """Return the current audit directory, refreshing from environment."""
+    global AUDIT_DIR
+    env_dir = os.getenv("EID_AUDIT_DIR")
+    target = Path(env_dir) if env_dir else _DEFAULT_AUDIT_DIR
+    if target != AUDIT_DIR:
+        target.mkdir(parents=True, exist_ok=True)
+        AUDIT_DIR = target
+    else:
+        target.mkdir(parents=True, exist_ok=True)
+    return AUDIT_DIR
 
 # Keep legacy readers working: JSONL lines remain dicts, we only ADD fields.
 # Files are per-day: audit_YYYY-MM-DD.jsonl
@@ -27,7 +41,7 @@ def _today_str(ts: Optional[float] = None) -> str:
 
 
 def _file_for(date_str: str) -> Path:
-    return AUDIT_DIR / f"audit_{date_str}.jsonl"
+    return _audit_dir() / f"audit_{date_str}.jsonl"
 
 
 def _sha256_bytes(b: bytes) -> str:

@@ -1,0 +1,169 @@
+﻿<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Eidollona Avatar Viewer</title>
+<style>
+  html,body{height:100%;margin:0}
+  body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b0f14;color:#eaeef2}
+  #ui{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;z-index:10}
+  .card{background:#121821;border:1px solid #1e2a39;border-radius:12px;padding:10px 12px}
+  label{font-size:12px;color:#a8b3c2;margin-right:6px}
+  select,button,input[type="file"]{background:#0f1620;color:#eaeef2;border:1px solid #273446;border-radius:8px;padding:6px 10px}
+  button{cursor:pointer}
+  #drop{position:fixed;inset:0;border:2px dashed #2c3b50;border-radius:16px;display:none;place-items:center;color:#a8b3c2}
+  #canvas{position:fixed;inset:0;display:block}
+  #hint{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);font-size:12px;color:#8fa2b7}
+</style>
+</head>
+<body>
+<div id="ui" class="card">
+  <label>Model:</label><span id="modelName">assets/avatars/eidollona.glb</span>
+  <label>Animation:</label><select id="anim"></select>
+  <button id="playPause">Play</button>
+  <button id="reset">Reset camera</button>
+  <input id="file" type="file" accept=".glb,.gltf"/>
+</div>
+<div id="drop">Drop .glb here</div>
+<canvas id="canvas"></canvas>
+<div id="hint">Orbit: Left-drag • Pan: Right/Middle-drag • Zoom: Wheel</div>
+
+<script type="module">
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import {OrbitControls} from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+import {GLTFLoader}   from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+import {DRACOLoader}  from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
+
+const CANVAS = document.getElementById("canvas");
+const renderer = new THREE.WebGLRenderer({canvas: CANVAS, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0f14);
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 200);
+camera.position.set(0.8, 1.4, 2.2);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,1.2,0);
+controls.enableDamping = true;
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x223344, 0.8);
+scene.add(hemi);
+const dir = new THREE.DirectionalLight(0xffffff, 1.0);
+dir.position.set(2, 3, 2);
+dir.castShadow = true;
+scene.add(dir);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(5, 64),
+  new THREE.MeshStandardMaterial({color:0x18202b, metalness:0.0, roughness:1.0})
+);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+let mixer=null, current=null, actions=[], clock=new THREE.Clock();
+const loader = new GLTFLoader();
+const draco = new DRACOLoader();
+draco.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
+loader.setDRACOLoader(draco);
+
+const qs = new URLSearchParams(location.search);
+const DEFAULT_MODEL = "assets/avatars/eidollona.glb";
+const MODEL = qs.get("model") || DEFAULT_MODEL;
+
+const modelName = document.getElementById("modelName");
+const sel = document.getElementById("anim");
+const btn = document.getElementById("playPause");
+const resetBtn = document.getElementById("reset");
+modelName.textContent = MODEL;
+
+function fitCameraToObject(obj, offset=1.25){
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3(); box.getSize(size);
+  const center = new THREE.Vector3(); box.getCenter(center);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const dist = Math.max(1.5, maxDim * offset);
+  camera.position.copy(center).add(new THREE.Vector3(dist, dist*0.6, dist));
+  controls.target.copy(center);
+  controls.update();
+}
+
+async function loadModel(url){
+  if (current) { scene.remove(current); current.traverse(o=>{ if(o.isMesh){ o.geometry.dispose(); if(o.material?.dispose) o.material.dispose(); } }); }
+  const gltf = await loader.loadAsync(url);
+  current = gltf.scene; current.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }});
+  scene.add(current);
+  fitCameraToObject(current);
+
+  actions = [];
+  sel.innerHTML = "";
+  mixer = null;
+  if (gltf.animations && gltf.animations.length){
+    mixer = new THREE.AnimationMixer(current);
+    gltf.animations.forEach((clip, i)=>{
+      const a = mixer.clipAction(clip);
+      actions.push(a);
+      const opt = document.createElement("option");
+      opt.value = i; opt.textContent = clip.name || ("Anim "+(i+1));
+      sel.appendChild(opt);
+    });
+    if (actions[0]){ actions[0].play(); btn.textContent="Pause"; }
+  } else {
+    btn.textContent="Play";
+  }
+}
+
+btn.onclick = ()=>{
+  if (!actions.length || !mixer) return;
+  const anyPlaying = actions.some(a=>a.isRunning());
+  if (anyPlaying){ actions.forEach(a=>a.stop()); btn.textContent="Play"; }
+  else { actions[sel.selectedIndex||0]?.play(); btn.textContent="Pause"; }
+};
+sel.onchange = ()=>{
+  if (!mixer) return;
+  actions.forEach(a=>a.stop());
+  actions[sel.selectedIndex]?.play();
+  btn.textContent="Pause";
+};
+resetBtn.onclick = ()=>{ fitCameraToObject(current||ground, 1.4); };
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  if (mixer) mixer.update(dt);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+addEventListener("resize", ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Drag & drop / file picker support
+const drop = document.getElementById("drop");
+["dragenter","dragover"].forEach(e=>addEventListener(e,ev=>{ev.preventDefault();drop.style.display="grid";}));
+["dragleave","drop"].forEach(e=>addEventListener(e,ev=>{ev.preventDefault();drop.style.display="none";}));
+addEventListener("drop", async ev=>{
+  const f = ev.dataTransfer.files[0]; if (!f) return;
+  if (!f.name.endsWith(".glb") && !f.name.endsWith(".gltf")) return alert("Drop a .glb/.gltf file");
+  const url = URL.createObjectURL(f);
+  modelName.textContent = f.name;
+  loadModel(url);
+});
+document.getElementById("file").addEventListener("change", ev=>{
+  const f = ev.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  modelName.textContent = f.name;
+  loadModel(url);
+});
+
+// Initial load
+loadModel(MODEL).catch(e=>alert("Failed to load model: "+e));
+</script>
+</body></html>

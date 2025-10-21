@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import Literal, Dict, Any, Optional, Union
+from typing_extensions import Annotated
 from pydantic import BaseModel, Field, conlist, constr
-from pydantic import field_validator, model_validator
+from pydantic import field_validator, model_validator, ConfigDict
 import time
 
 
@@ -12,10 +13,17 @@ import time
 
 # Conservative widget-id format (compatible with existing "w_..." ids)
 WIDGET_ID_RE = r"^[A-Za-z0-9_\-:.]{3,64}$"
-WidgetId = constr(pattern=WIDGET_ID_RE, min_length=3, max_length=64)  # type: ignore
+# Use Annotated so static type checkers see a real type (str) with constraints
+WidgetId = Annotated[
+    str,
+    Field(pattern=WIDGET_ID_RE, min_length=3, max_length=64),
+]
 
 # Idempotency keys: simple, URL/header-safe
-IdemKey = constr(pattern=r"^[A-Za-z0-9_\-:.]{1,64}$", min_length=1, max_length=64)  # type: ignore
+IdemKey = Annotated[
+    str,
+    Field(pattern=r"^[A-Za-z0-9_\-:.]{1,64}$", min_length=1, max_length=64),
+]
 
 WidgetType = Literal["kpi", "line_chart", "table", "html"]
 
@@ -29,9 +37,8 @@ class _BaseWidget(BaseModel):
     """Shared, optional id field so server can upsert/replace deterministically."""
 
     id: Optional[WidgetId] = None
-
-    class Config:
-        extra = "forbid"  # reject unknown keys early
+    # Pydantic v2 config
+    model_config = ConfigDict(extra="forbid")  # reject unknown keys early
 
 
 class KPI(_BaseWidget):
@@ -61,9 +68,8 @@ class LineChart(_BaseWidget):
 class TableColumn(BaseModel):
     key: constr(strip_whitespace=True, min_length=1, max_length=48)  # type: ignore
     label: constr(strip_whitespace=True, min_length=1, max_length=80)  # type: ignore
-
-    class Config:
-        extra = "forbid"
+    # Pydantic v2 config
+    model_config = ConfigDict(extra="forbid")
 
 
 class Table(_BaseWidget):
@@ -102,9 +108,8 @@ class PushRequest(BaseModel):
     widget_id: Optional[WidgetId] = None
     idempotency_key: Optional[IdemKey] = None
     ts: float = Field(default_factory=lambda: time.time())
-
-    class Config:
-        extra = "forbid"
+    # Pydantic v2 config
+    model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
     def _op_specific_requirements(self):

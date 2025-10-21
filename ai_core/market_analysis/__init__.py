@@ -13,7 +13,7 @@ snapshot by blending underlying engines (simple weighted approach).
 """
 
 from __future__ import annotations
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 from .sentiment_analysis import SentimentEngine
 from .anomaly_detector import AnomalyDetector
@@ -22,21 +22,11 @@ from .market_profile import MarketProfile
 from .order_flow import OrderFlowAnalyzer
 from .price_action import PriceActionAnalyzer
 
+from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
+
 try:  # pragma: no cover
-    from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
 except Exception:  # pragma: no cover
-
-    class SymbolicEquation41:  # type: ignore
-        def evaluate(self, ctx):
-            class S:
-                pass
-
-            s = S()
-            s.risk = ctx.get("risk_hint", 0.4)
-            s.uncertainty = ctx.get("uncertainty_hint", 0.4)
-            s.coherence = ctx.get("coherence_hint", 0.6)
-            return s
 
     def assemble_se41_context(**kw):
         return kw
@@ -47,7 +37,7 @@ def _blend(values):
 
 
 class CompositeMarketAnalysis:
-    def __init__(self, symbolic: Optional[SymbolicEquation41] = None):
+    def __init__(self, symbolic: Any = None):
         self.sentiment = SentimentEngine(symbolic=symbolic)
         self.anomaly = AnomalyDetector(symbolic=symbolic)
         self.volume = VolumeAnalyzer(symbolic=symbolic)

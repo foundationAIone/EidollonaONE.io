@@ -1,0 +1,9 @@
+{
+  "envelope_id": "env_1760031072251_0fd1fe049ebb",
+  "created_at": 1760031072.2519312,
+  "ttl_seconds": 5,
+  "opened_at": 1760031072.3154516,
+  "consent_hash": "7733842523683ec909a638e49bd04fe671402b6ba256ea0c18278af81101dbc8",
+  "artifact_ref": "ref-1",
+  "meta": {}
+}

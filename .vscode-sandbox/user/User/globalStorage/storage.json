@@ -1,0 +1,77 @@
+{
+    "telemetry.machineId": "e8698d9d0a6eff6e27cb11c5cc2858e5749d58447e76e75647f765bbd88bd1e1",
+    "telemetry.sqmId": "{CAAFA74E-7452-46F9-A7D5-850FCED38CE5}",
+    "telemetry.devDeviceId": "5234d6ec-a9b1-4a99-8b1f-7bbe1d9d0f60",
+    "backupWorkspaces": {
+        "workspaces": [],
+        "folders": [
+            {
+                "folderUri": "file:///e%3A/EidollonaONE"
+            }
+        ],
+        "emptyWindows": []
+    },
+    "windowControlHeight": 35,
+    "profileAssociations": {
+        "workspaces": {
+            "file:///e%3A/EidollonaONE": "__default__profile__"
+        },
+        "emptyWindows": {}
+    },
+    "theme": "vs-dark",
+    "themeBackground": "#1f1f1f",
+    "windowSplash": {
+        "zoomLevel": 0,
+        "baseTheme": "vs-dark",
+        "colorInfo": {
+            "foreground": "#cccccc",
+            "background": "#1f1f1f",
+            "editorBackground": "#1f1f1f",
+            "titleBarBackground": "#181818",
+            "titleBarBorder": "#2b2b2b",
+            "activityBarBackground": "#181818",
+            "activityBarBorder": "#2b2b2b",
+            "sideBarBackground": "#181818",
+            "sideBarBorder": "#2b2b2b",
+            "statusBarBackground": "#181818",
+            "statusBarBorder": "#2b2b2b",
+            "statusBarNoFolderBackground": "#1f1f1f"
+        },
+        "layoutInfo": {
+            "sideBarSide": "left",
+            "editorPartMinWidth": 220,
+            "titleBarHeight": 35,
+            "activityBarWidth": 48,
+            "sideBarWidth": 300,
+            "auxiliaryBarWidth": 361,
+            "statusBarHeight": 22,
+            "windowBorder": false
+        }
+    },
+    "windowSplashWorkspaceOverride": {
+        "layoutInfo": {
+            "sideBarWidth": 300,
+            "auxiliaryBarWidth": 361,
+            "workspaces": {
+                "dc1b4279628f9f1ae123bd08c42e9c6b": {
+                    "sideBarVisible": true,
+                    "auxiliaryBarVisible": true
+                }
+            }
+        }
+    },
+    "windowsState": {
+        "lastActiveWindow": {
+            "folder": "file:///e%3A/EidollonaONE",
+            "backupPath": "E:\\EidollonaONE\\.vscode-sandbox\\user\\Backups\\69c9d4e16a59f8b1b638dc3bca7d439d",
+            "uiState": {
+                "mode": 0,
+                "x": -80,
+                "y": 0,
+                "width": 1466,
+                "height": 900
+            }
+        },
+        "openedWindows": []
+    }
+}

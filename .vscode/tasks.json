@@ -17,6 +17,12 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "Tests: EMP + Security",
+			"type": "shell",
+			"command": ".\\eidollona_env\\Scripts\\python.exe -m pytest -q emp\\tests\\test_emp_smoke.py security\\tests\\test_security_smoke.py",
+			"problemMatcher": []
+		},
+		{
 			"label": "Hygiene: Apply",
 			"type": "shell",
 			"command": "pwsh",
@@ -103,6 +109,117 @@
 			"detail": "Run SAFE planning smoke"
 		},
 		{
+			"label": "Avatar: Scan assets",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-File",
+				"scripts/run_avatar_scan.ps1",
+				"-Repo",
+				"${workspaceFolder}",
+				"-Top",
+				"12"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Install assets (GLB+portrait)",
+			"type": "shell",
+			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/install_avatar_assets.ps1 -Repo \"${workspaceFolder}\" -Model \"${input:ModelPath}\" -Portrait \"${input:PortraitPath}\" -Force",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Check preview readiness",
+			"type": "shell",
+			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \"& { $env:PYTHONIOENCODING='utf-8'; $repo='${workspaceFolder}'; Set-Location $repo; if(Get-Command python -ErrorAction SilentlyContinue){ python scripts/avatar_preview_ready.py } elseif(Get-Command py -ErrorAction SilentlyContinue){ py -3 scripts/avatar_preview_ready.py } else { Write-Host 'Python not found'; exit 1 } }\"",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Run preview",
+			"type": "shell",
+			"command": "pwsh -File scripts/run_avatar_preview.ps1 -Repo \"${workspaceFolder}\" -Port 8077",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Check + Run",
+			"type": "shell",
+			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \"& { $repo='${workspaceFolder}'; Set-Location $repo; pwsh -File scripts/avatar_quick_check.ps1; if($LASTEXITCODE -eq 0){ pwsh -File scripts/run_avatar_preview.ps1 -Repo '$repo' -Port 8077 } else { Write-Host 'Readiness FAIL: not launching preview.'; exit 1 } }\"",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Install + Check + Run (from PC)",
+			"type": "shell",
+			"command": "pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/chain_avatar_workflow.ps1",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared",
+				"clear": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Optimize GLB",
+			"type": "shell",
+			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/optimize_glb.ps1 -Repo \"${workspaceFolder}\"",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Quick Check (show results)",
+			"type": "shell",
+			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/avatar_quick_check.ps1",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new",
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
 			"label": "Avatar: Quick Demo (eidollona_env)",
 			"type": "shell",
 			"command": "${workspaceFolder}/eidollona_env/Scripts/python.exe",
@@ -122,6 +239,220 @@
 			},
 			"problemMatcher": [],
 			"detail": "Create an avatar from config and run one SAFE interaction with voice description"
+		},
+		{
+			"label": "Social: Telegram Bridge",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"social.telegram.adapter"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Run the SAFE Telegram bridge with built-in moderation"
+		},
+		{
+			"label": "Social: Audit Tail",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"if (Test-Path 'logs/audit.ndjson') { Get-Content -LiteralPath 'logs/audit.ndjson' -Tail 50 -Wait } else { Write-Host 'Audit log not created yet.' }"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Watch the NDJSON audit log that records social bridge events"
+		},
+		{
+			"label": "Trader: Status Probe",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"iwr -UseBasicParsing -Method Get 'http://127.0.0.1:8000/v1/trader/paper/status?token=dev-token' | Select-Object -Expand Content"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Fetch the trader paper status from the SAFE API"
+		},
+		{
+			"label": "Trader: Paper Trade Demo",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$body = @{ symbol = 'SAFE'; side = 'buy'; quantity = 1.5; price = 12.5 } | ConvertTo-Json; iwr -UseBasicParsing -Method Post -ContentType 'application/json' -Body $body 'http://127.0.0.1:8000/v1/trader/paper/trade?token=dev-token' | Select-Object -Expand Content"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"detail": "Submit a sample paper trade via the SAFE trader API"
+		},
+		{
+			"label": "Start API (AlphaTap 8802)",
+			"type": "shell",
+			"command": "$env:ALPHATAP_TOKEN='dev-token'; .\\.alpha_env\\Scripts\\python.exe -m uvicorn bridge.alpha_tap:app --host 127.0.0.1 --port 8802",
+			"problemMatcher": []
+		},
+		{
+			"label": "Start HUD (7860)",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe -m http.server 7860 -d .\\web_interface\\static\\webview",
+			"problemMatcher": []
+		},
+		{
+			"label": "Cluster: Quote (null)",
+			"type": "shell",
+			"command": "pwsh -c \"$spec=@{ job='embed_corpus_large'; provider='null'; resources=@{gpu=8;hours=2;mem_gb=128}; data=@{}; output=@{}; caps=@{cost_usd_max=1000}; audit=@{operator='programmerONE'; gate='ALLOW'} } | ConvertTo-Json -Depth 8; iwr -UseBasicParsing -Method POST -ContentType 'application/json' -Body $spec 'http://127.0.0.1:8802/v1/cluster/quote?token=dev-token' | Select-Object -Expand Content\"",
+			"problemMatcher": []
+		},
+		{
+			"label": "Go Safe (paper loop)",
+			"type": "shell",
+			"command": "pwsh .\\scripts\\go_safe.ps1 -Base \"http://127.0.0.1:8802\" -Token \"dev-token\"",
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile hygiene",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe .\\scripts\\compile_project.py",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run tests (quick)",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe -m pytest -q",
+			"problemMatcher": []
+		},
+		{
+			"label": "Readiness: Probe",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\preflight.ps1"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Tests: GREEN Sweep",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe -m pytest -q tests\\test_planning_api_smoke.py tests\\test_emp_smoke.py tests\\test_security_smoke.py tests\\test_bs_enhanced.py tests\\test_trading_slice.py tests\\ai_learning\\test_eval_harness.py",
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Nightly: SVI QA",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts/nightly_svi_qa.py"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Nightly: PQRE Sanity",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts/nightly_pqre_sanity.py"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Nightly: Cluster Null",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts/nightly_cluster_null.py"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "AI Learning: Eval",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/ai_eval.py",
+				"--emit-json"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "AI Learning: CI Precheck",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/ci_ai_precheck.py"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Tests: EMP + Security",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe -m pytest -q emp\\tests\\test_emp_smoke.py security\\tests\\test_security_smoke.py",
+			"problemMatcher": []
 		},
 		{
 			"label": "Compile Project (first-party only)",
@@ -621,7 +952,7 @@
 				"scripts/compile_project.py"
 			],
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -639,6 +970,38 @@
 				"$python"
 			],
 			"group": "test"
+		},
+		{
+			"label": "pytest: sovereignty preferences",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_sovereign_preferences.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test",
+			"detail": "Validate sovereign preference store endpoints"
+		},
+		{
+			"label": "pytest: avatar reactive layer",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_avatar_reactive.py"
+			],
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test",
+			"detail": "Exercise avatar reactive directive generation"
 		},
 		{
 			"label": "pytest: self_build (all)",
@@ -741,7 +1104,7 @@
 			],
 			"isBackground": false,
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -784,7 +1147,7 @@
 				"Make-ProjectFingerprint.ps1"
 			],
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -859,7 +1222,7 @@
 				"scripts/compile_project.py"
 			],
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -872,7 +1235,7 @@
 			],
 			"isBackground": false,
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -885,7 +1248,7 @@
 			],
 			"isBackground": false,
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -898,7 +1261,7 @@
 			],
 			"isBackground": false,
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -911,7 +1274,7 @@
 			],
 			"isBackground": false,
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -924,7 +1287,7 @@
 			],
 			"isBackground": false,
 			"problemMatcher": [
-				"$gcc"
+				"$python"
 			],
 			"group": "build"
 		},
@@ -1030,35 +1393,537 @@
 				"$python"
 			],
 			"group": "test"
-		}
-		,
+		},
 		{
 			"label": "Hygiene: Analyze",
 			"type": "shell",
 			"command": "pwsh",
-			"args": ["-NoProfile","-File",".\\scripts\\repo_hygiene.ps1","-Analyze"],
+			"args": [
+				"-NoProfile",
+				"-File",
+				".\\scripts\\repo_hygiene.ps1",
+				"-Analyze"
+			],
 			"problemMatcher": []
 		},
 		{
 			"label": "Guard: SE41 Enforcement",
 			"type": "shell",
 			"command": "${config:python.defaultInterpreterPath}",
-			"args": [".\\tools\\enforce_symbolic_v41.py"],
+			"args": [
+				".\\tools\\enforce_symbolic_v41.py"
+			],
 			"problemMatcher": []
 		},
 		{
 			"label": "Test: Fast Suite",
 			"type": "shell",
 			"command": "${config:python.defaultInterpreterPath}",
-			"args": ["-m","pytest","-q"],
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
 			"problemMatcher": []
 		},
 		{
 			"label": "Perf: Smoke",
 			"type": "shell",
 			"command": "${config:python.defaultInterpreterPath}",
-			"args": [".\\scripts\\perf_smoke.py"],
+			"args": [
+				".\\scripts\\perf_smoke.py"
+			],
 			"problemMatcher": []
+		},
+		{
+			"label": "Quick compile: main.py",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"py_compile",
+				"web_planning/backend/main.py"
+			]
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Compile Project (first-party only)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_trading_bots_namespace.py",
+				"tests/test_master_endpoints.py"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Pytest: bots + master endpoints",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_trading_bots_namespace.py",
+				"tests/test_master_endpoints.py"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Pytest: trading bots namespace (focused)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_trading_bots_namespace.py"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Pytest: master endpoints (focused)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_master_endpoints.py"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [auto]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test: Fast Suite",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests/test_ai_brain_reasoning.py"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Hygiene: Analyze",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-File",
+				".\\scripts\\repo_hygiene.ps1",
+				"-Analyze"
+			]
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Compile Project (first-party only) [ad-hoc]",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"scripts/compile_project.py"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Test: Fast Suite (ad-hoc)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test: Fast Suite (ad-hoc)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test: Fast Suite (ad-hoc)",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"pytest",
+				"-q"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Promo: Sweep (All)",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_sweep.py"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Promo: Update STATUS",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_update_status.py"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Promo: Public Surfaces",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_sweep.py",
+				"--modules",
+				"web_interface,web_planning,bridge"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Promo: Core Ops",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_sweep.py",
+				"--modules",
+				"sovereignty,security,emp,serplus"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Promo: Trading",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_sweep.py",
+				"--modules",
+				"trading_engine"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Promo: Immersive",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_sweep.py",
+				"--modules",
+				"avatar"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Promo: Data & Backups",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"scripts\\promo_sweep.py",
+				"--modules",
+				"data_backups"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: FanComp",
+			"type": "shell",
+			"command": "start",
+			"args": [
+				"http://127.0.0.1:7860/static/webview/avatars/runner.html?id=fancomp"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Avatar: Serve-it",
+			"type": "shell",
+			"command": "start",
+			"args": [
+				"http://127.0.0.1:7860/static/webview/avatars/runner.html?id=serveit"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Tests: FanComp & Serve-it",
+			"type": "shell",
+			"command": ".\\.alpha_env\\Scripts\\python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"-q",
+				"tests\\test_fancomp_pool.py",
+				"tests\\test_serveit_flow.py"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Quick compile: pq rendering init",
+			"type": "shell",
+			"command": "${config:python.defaultInterpreterPath}",
+			"args": [
+				"-m",
+				"py_compile",
+				"ai_core/probabilistic_quantum_rendering/__init__.py"
+			]
+		}
+	],
+	"inputs": [
+		{
+			"id": "ModelPath",
+			"type": "promptString",
+			"description": "Path to GLB model (source file)",
+			"default": ""
+		},
+		{
+			"id": "PortraitPath",
+			"type": "promptString",
+			"description": "Path to portrait image (source file)",
+			"default": ""
 		}
 	]
 }

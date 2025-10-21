@@ -27,7 +27,7 @@ import hashlib
 import time
 
 try:  # optional governance imports
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
     from trading.helpers.se41_trading_gate import se41_numeric, ethos_decision  # type: ignore
 except Exception:  # pragma: no cover
 
@@ -172,7 +172,7 @@ class SymbolicBlender:
         """
         policy_meta = policy_meta or {}
         # Governance score (optional) — simple placeholder using coherence surrogate
-        se_ctx = assemble_se41_context(**policy_meta)
+        _ = assemble_se41_context(**policy_meta)
         score = _clamp(
             se41_numeric(
                 M_t=policy_meta.get("coherence", 0.75),

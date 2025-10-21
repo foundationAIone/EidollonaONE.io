@@ -8,6 +8,7 @@ import json
 import os
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from symbolic_core.symbolic_equation import SymbolicEquation41
 from .autonomous_bot import AutonomousBot, BotType, BotCapabilities, Task
 
 
@@ -24,8 +25,10 @@ class TaskExecutorBot(AutonomousBot):
         # Task execution specific attributes
         self.execution_tools = {}
         self.command_history = []
+        self.audit_log: List[Dict[str, Any]] = []
         self.execution_strategies = {}
         self.security_constraints = []
+        self._symbolic = SymbolicEquation41()
 
         # Initialize task execution capabilities
         self.initialize_execution_tools()
@@ -119,6 +122,35 @@ class TaskExecutorBot(AutonomousBot):
         print(f"🎯 Executing task: {task.description}")
         print(f"   Type: {task_type}")
         print(f"   Strategy: {strategy.get('approach', 'standard')}")
+
+        param_count = 0
+        param_entropy = 0.0
+        if isinstance(task_params, dict):
+            param_count = len(task_params)
+            param_entropy = sum(len(str(v)) for v in task_params.values())
+        elif isinstance(task_params, (list, tuple, set)):
+            param_count = len(task_params)
+            param_entropy = sum(len(str(v)) for v in task_params)
+        elif task_params not in (None, ""):
+            param_count = 1
+            param_entropy = len(str(task_params))
+
+        symbolic_signals = self._symbolic.evaluate(
+            {
+                "coherence_hint": max(0.1, min(1.0, self.consciousness_coherence)),
+                "risk_hint": min(1.0, 0.25 + param_count / 12.0),
+                "uncertainty_hint": min(1.0, param_entropy / 256.0),
+                "metadata": {
+                    "parameters": param_count,
+                    "description_len": len(task.description or ""),
+                },
+            }
+        ).to_dict()
+        strategy = {
+            **strategy,
+            "symbolic_bias": symbolic_signals.get("coherence", 0.5),
+            "symbolic": symbolic_signals,
+        }
 
         try:
             # Apply security validation
@@ -876,7 +908,7 @@ class TaskExecutorBot(AutonomousBot):
         self,
         url: str,
         method: str = "GET",
-        headers: Dict[str, str] = None,
+        headers: Optional[Dict[str, str]] = None,
         data: Any = None,
     ) -> Dict[str, Any]:
         """Make HTTP request safely"""
@@ -985,6 +1017,8 @@ class TaskExecutorBot(AutonomousBot):
                 parsed_data = json.loads(json_data)
             else:
                 parsed_data = json_data
+
+            processed_data = parsed_data
 
             # Apply consciousness-informed processing
             if self.consciousness_coherence > 0.6:
@@ -1372,8 +1406,12 @@ class TaskExecutorBot(AutonomousBot):
     # Logging methods
 
     def log_file_operation(
-        self, operation: str, file_path: str, success: bool, error: str = None
-    ):
+        self,
+        operation: str,
+        file_path: str,
+        success: bool,
+        error: Optional[str] = None,
+    ) -> None:
         """Log file operation for audit trail"""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -1383,14 +1421,19 @@ class TaskExecutorBot(AutonomousBot):
             "error": error,
             "bot_id": self.bot_id,
         }
+        self.audit_log.append(log_entry)
         # In a real implementation, this would write to a log file or database
         print(
             f"📁 File operation logged: {operation} on {file_path} - {'Success' if success else 'Failed'}"
         )
 
     def log_command_execution(
-        self, command: str, success: bool, output: str = None, error: str = None
-    ):
+        self,
+        command: str,
+        success: bool,
+        output: Optional[str] = None,
+        error: Optional[str] = None,
+    ) -> None:
         """Log command execution for audit trail"""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -1407,7 +1450,9 @@ class TaskExecutorBot(AutonomousBot):
         """Log scheduled task"""
         print(f"📅 Scheduled task logged: {task_name} at {schedule_time}")
 
-    async def log_execution_error(self, task: Task, error_result: Dict[str, Any]):
+    async def log_execution_error(
+        self, task: Task, error_result: Dict[str, Any]
+    ) -> None:
         """Log task execution error for learning"""
         error_log = {
             "timestamp": datetime.now().isoformat(),
@@ -1420,6 +1465,7 @@ class TaskExecutorBot(AutonomousBot):
                 "symbolic_alignment": self.symbolic_alignment,
             },
         }
+        self.audit_log.append(error_log)
         # In a real implementation, this would be stored for analysis
         print(f"❌ Execution error logged for task {task.task_id}")
 
@@ -1444,7 +1490,7 @@ class TaskExecutorBot(AutonomousBot):
 
 # Factory function for creating task executor bots
 def create_task_executor_bot(
-    bot_id: str = None, consciousness_engine=None
+    bot_id: Optional[str] = None, consciousness_engine=None
 ) -> TaskExecutorBot:
     """Create a task executor bot with default capabilities"""
     if bot_id is None:

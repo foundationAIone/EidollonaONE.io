@@ -2,15 +2,24 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import os
 import time
 
+_append_event: Optional[object]
 try:
-    from common.audit_chain import append_event as _audit
+    from common.audit_chain import append_event as _append_event  # type: ignore
 except Exception:
+    _append_event = None  # type: ignore
 
-    def _audit(**_): ...
+
+def _audit(**kwargs: Any) -> str:
+    try:
+        if _append_event:
+            return _append_event(**kwargs)  # type: ignore[misc]
+    except Exception:
+        pass
+    return "noop"
 
 
 try:
@@ -27,6 +36,13 @@ try:
     from avatar.interface.avatar_api import load_avatar, pose_avatar, animate_avatar, export_avatar  # type: ignore
 except Exception:  # pragma: no cover
     load_avatar = pose_avatar = animate_avatar = export_avatar = None  # type: ignore
+
+try:
+    from avatar.reactive_layer import generate_directive as _generate_directive  # type: ignore
+    from avatar.reactive_layer import directive_summary as _directive_summary  # type: ignore
+except Exception:  # pragma: no cover
+    _generate_directive = None  # type: ignore
+    _directive_summary = None  # type: ignore
 
 
 router = APIRouter(prefix="/avatar", tags=["avatar"])
@@ -170,6 +186,36 @@ def animate(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
             payload={"err": str(e)},
         )
         raise HTTPException(500, f"avatar_animate_error: {e}")
+
+
+@router.post("/reactive")
+def reactive(request: Request, body: Dict[str, Any]) -> Dict[str, Any]:
+    _ok_guard("avatar reactive")
+    if _generate_directive is None or _directive_summary is None:
+        raise HTTPException(503, "avatar_reactive_unavailable")
+
+    signals = dict(body.get("signals") or {})
+    features = body.get("features")
+    seed = body.get("seed")
+    try:
+        directive = _generate_directive(
+            signals=signals,
+            features=features if isinstance(features, dict) else None,
+            seed=int(seed) if seed is not None else None,
+        )
+    except Exception as e:
+        _audit(actor="avatar", action="reactive_error", payload={"err": str(e)})
+        raise HTTPException(500, f"avatar_reactive_error: {e}")
+
+    summary = _directive_summary(directive)
+    payload = {
+        "signals": signals,
+        "features": features or {},
+        "directive": directive.as_dict(),
+        "summary": summary,
+    }
+    _audit(actor="avatar", action="reactive", payload=payload)
+    return {"ok": True, **payload, **_meta(request)}
 
 
 @router.get("/artifacts/{run_id}")

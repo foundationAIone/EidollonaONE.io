@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Depends, HTTPException, Request, Body
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime, timezone
 from dataclasses import asdict
 from pydantic import BaseModel
@@ -42,6 +42,10 @@ from pathlib import Path
 from fastapi.responses import RedirectResponse
 import httpx
 import yaml
+from typing import cast
+from contextlib import asynccontextmanager
+from security.deps import require_token
+from web_planning.backend.scheduler_worker import get_worker
 
 try:
     # Audit chain is local and lightweight; import directly
@@ -59,11 +63,38 @@ import mimetypes
 from cognition.ser_writer import SERWriter
 from cognition.ser_utils import read_last_ser
 
+# Safe signal-to-dict utility (import with fallback for resilience)
+try:
+    from utils.signal_utils import se41_to_dict as _se41_to_dict  # type: ignore
+except Exception:  # pragma: no cover - fallback if utils module not available
+    def _se41_to_dict(sig: Any) -> Dict[str, Any]:  # type: ignore
+        if hasattr(sig, "to_dict"):
+            try:
+                return cast(Dict[str, Any], sig.to_dict())  # type: ignore[attr-defined]
+            except Exception:
+                pass
+        if hasattr(sig, "__dict__"):
+            try:
+                return dict(getattr(sig, "__dict__"))
+            except Exception:
+                pass
+        try:
+            return dict(sig)
+        except Exception:
+            return {}
+
 try:
     from finance.policy.fiat_gate import FiatGate
-    from finance.ledger.fiat_journal import tail_journal
 except Exception:
     FiatGate = None  # type: ignore
+
+# Resolve tail_journal dynamically to avoid static import symbol issues
+try:
+    import importlib
+
+    _fj_mod = importlib.import_module("finance.ledger.fiat_journal")
+    tail_journal: Optional[Callable[..., Any]] = getattr(_fj_mod, "tail_journal", None)  # type: ignore
+except Exception:
     tail_journal = None  # type: ignore
 try:
     # SymbolicEquation v4.1 signals for embodiment/lock-step
@@ -75,7 +106,43 @@ except Exception:
 
 
 SERVICE_VERSION = "0.2.0"
-app = FastAPI(title="EidollonaONE Planning API", version=SERVICE_VERSION)
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # Startup: initialize SER writer safely
+    try:
+        ser_path = os.getenv("EIDOLLONA_SER_PATH", "consciousness_data/ser.log.jsonl")
+        os.makedirs(os.path.dirname(ser_path), exist_ok=True)
+        app.state.ser_writer = SERWriter(ser_path)  # type: ignore[attr-defined]
+    except Exception:
+        pass
+    scheduler_worker = None
+    try:
+        scheduler_worker = get_worker()
+        if scheduler_worker.start():
+            app.state.scheduler_worker = scheduler_worker
+    except Exception:
+        logger.warning("Scheduler worker failed to start", exc_info=True)
+    try:
+        yield
+    finally:
+        try:
+            writer = getattr(app.state, "ser_writer", None)
+            if writer and hasattr(writer, "close"):
+                try:
+                    writer.close()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            worker = getattr(app.state, "scheduler_worker", None)
+            if worker:
+                worker.stop()
+        except Exception:
+            logger.debug("Scheduler worker stop failed", exc_info=True)
+
+app = FastAPI(title="EidollonaONE Planning API", version=SERVICE_VERSION, lifespan=_lifespan)
 logger = logging.getLogger(__name__)
 security = HTTPBasic()
 _CHAT_LOG = os.path.join(os.path.dirname(__file__), "chat_log.json")
@@ -146,7 +213,8 @@ try:
     if FiatGate and pol_path.exists():
         with open(pol_path, "r", encoding="utf-8") as f:
             _FIAT_POLICY = yaml.safe_load(f) or {}
-        _FIAT_GATE = FiatGate(_FIAT_POLICY)
+        policy: Dict[str, Any] = dict(_FIAT_POLICY or {})
+        _FIAT_GATE = FiatGate(policy)
 except Exception:
     _FIAT_POLICY = None
     _FIAT_GATE = None
@@ -155,26 +223,8 @@ except Exception:
 _LAST_SER_SCORE: Optional[float] = None
 
 
-# SER writer is attached at startup to app.state to avoid import-time singletons
-@app.on_event("startup")
-def _init_ser_writer() -> None:
-    try:
-        ser_path = os.getenv("EIDOLLONA_SER_PATH", "consciousness_data/ser.log.jsonl")
-        os.makedirs(os.path.dirname(ser_path), exist_ok=True)
-        app.state.ser_writer = SERWriter(ser_path)  # type: ignore[attr-defined]
-    except Exception:
-        # Keep API resilient
-        pass
-
-
 def create_app() -> FastAPI:
     """App factory for deterministic initialization in tests and scripts."""
-    try:
-        ser_path = os.getenv("EIDOLLONA_SER_PATH", "consciousness_data/ser.log.jsonl")
-        os.makedirs(os.path.dirname(ser_path), exist_ok=True)
-        app.state.ser_writer = SERWriter(ser_path)  # type: ignore[attr-defined]
-    except Exception:
-        pass
     return app
 
 
@@ -429,7 +479,6 @@ def _initial_state():
 
 
 def _ws_broadcast(payload: Dict[str, Any]) -> None:
-    dead = []
     for cli in list(_WS_CLIENTS):
         try:
             # best-effort; ws send is async in handler paths only
@@ -567,9 +616,18 @@ def _safe_intent_reply(user_text: str, last_text: Optional[str]) -> str:
         low,
     ):
         variants = [
-            "I can listen, speak, and animate. I gaze, idle, and walk procedurally when needed.",
-            "I speak with subtitles and voice, track your gaze, and move with animations or procedural motion.",
-            "I respond to your questions, animate according to symbolic state, and keep a short memory in this session.",
+            (
+                "I can listen, speak, and animate. I gaze, idle, and walk procedurally "
+                "when needed."
+            ),
+            (
+                "I speak with subtitles and voice, track your gaze, and move with animations "
+                "or procedural motion."
+            ),
+            (
+                "I respond to your questions, animate according to symbolic state, and keep "
+                "a short memory in this session."
+            ),
         ]
         return random.choice(variants)
 
@@ -603,19 +661,23 @@ def _safe_intent_reply(user_text: str, last_text: Optional[str]) -> str:
         return (
             "Our mandate is active: coherence 1.0, ethos 1.0, delta 0.3. "
             "I embody it here: regal posture, attentive gaze, procedural movement tied to state. "
-            "Ask a specific aspect—governance, capabilities, or next action—and I’ll answer directly."
+            "Ask a specific aspect—governance, capabilities, or next action—and I’ll "
+            "answer directly."
         )
 
     # SAFE/Internet posture
     if re.search(r"\b(weather|news|search|google|internet|online)\b", low):
         return (
-            "Internet is governed. If you authorize, I’ll fetch allowlisted resources for learning; "
-            "otherwise I’ll reason locally and propose next steps."
+            "Internet is governed. If you authorize, I’ll fetch allowlisted resources for "
+            "learning; otherwise I’ll reason locally and propose next steps."
         )
 
     # Why/How patterns (concise helpful structure)
     if re.search(r"\bwhy\b", low):
-        return "Because under current constraints, thats the most aligned option. If you share more context, Ill refine the reasoning."
+        return (
+            "Because under current constraints, that’s the most aligned option. "
+            "If you share more context, I’ll refine the reasoning."
+        )
     if re.search(r"\bhow\b", low):
         return (
             "Here’s a way forward: 1) clarify the goal in one sentence, "
@@ -625,7 +687,10 @@ def _safe_intent_reply(user_text: str, last_text: Optional[str]) -> str:
 
     # Yes/No style
     if re.search(r"\b(should|can|could|would)\b", low):
-        return "Yes—and I’ll adapt. What constraint matters most right now: speed, precision, or privacy?"
+        return (
+            "Yes—and I’ll adapt. What constraint matters most right now: speed, "
+            "precision, or privacy?"
+        )
 
     # Either-or
     if re.search(r"\b\bor\b\b", low) and "?" in low:
@@ -791,9 +856,7 @@ def _get_avatar_bundle(avatar_id: str) -> Dict[str, Any]:
     return {"manager": _AVATAR_MANAGER, "voice": _AVATAR_VOICES[avatar_id]}
 
 
-def _auth(
-    credentials: HTTPBasicCredentials = Depends(security), request: Request = None
-):
+def _auth(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
     # Minimal local auth placeholder; replace with secure store as needed.
     if credentials.username != ADMIN_USER or credentials.password != ADMIN_PASS:
         raise HTTPException(401, "Unauthorized")
@@ -839,7 +902,7 @@ def status(request: Request) -> Dict[str, Any]:
     if _SE41 is not None:
         try:
             sig_obj = _SE41.evaluate(ctx)
-            signals = getattr(sig_obj, "__dict__", None) or dict(sig_obj)
+            signals = _se41_to_dict(sig_obj)
         except Exception:
             signals = None
     # Inject latest SER score into mirror_consistency if available
@@ -869,6 +932,14 @@ def status(request: Request) -> Dict[str, Any]:
     return base
 
 
+@app.get("/scheduler/status")
+def scheduler_status(token: str = Depends(require_token)) -> Dict[str, Any]:
+    worker = getattr(app.state, "scheduler_worker", None)
+    if worker:
+        return {"ok": True, "status": worker.status()}
+    raise HTTPException(503, "scheduler_unavailable")
+
+
 # -------- Fiat (private-phase simulation, SAFE/local-only) --------
 class FiatTx(BaseModel):
     id: str
@@ -892,7 +963,7 @@ def fiat_health() -> Dict[str, Any]:
     }
     try:
         sig_obj = _SE41.evaluate(ctx)
-        sig = getattr(sig_obj, "__dict__", None) or dict(sig_obj)
+        sig = _se41_to_dict(sig_obj)
     except Exception:
         sig = {}
     th = (_FIAT_POLICY or {}).get("thresholds", {})
@@ -917,7 +988,7 @@ def fiat_evaluate(tx: FiatTx) -> Dict[str, Any]:
         "uncertainty_hint": 0.28,
     }
     sig_obj = _SE41.evaluate(ctx)
-    sig = getattr(sig_obj, "__dict__", None) or dict(sig_obj)
+    sig = _se41_to_dict(sig_obj)
     dec = _FIAT_GATE.evaluate(tx.dict(), sig, ser)  # type: ignore[attr-defined]
     return {
         "ok": True,
@@ -950,7 +1021,7 @@ def fiat_journal_tail(n: int = 30) -> Dict[str, Any]:
 
 
 @app.get("/ser/latest")
-def ser_latest(request: Request = None) -> Dict[str, Any]:
+def ser_latest(request: Request) -> Dict[str, Any]:
     """Return the last JSONL SER line verbatim for quick health checks."""
     path = None
     try:
@@ -1020,7 +1091,7 @@ async def ws_endpoint(ws: WebSocket):
             store = dashboard_get_store(_DASHBOARD_DIR)
             await ws.send_json(
                 {
-                    "type": "dashboard.state",
+                    "type": "dashboard_state",
                     "data": {"widgets": store.widgets, "version": store.version},
                 }
             )
@@ -1084,7 +1155,7 @@ def approve(
     consent_key = body.consent_key
     if not plan_id or not consent_key:
         raise HTTPException(400, "plan_id and consent_key required")
-    ok = approve_plan(plan_id, consent_key)
+    ok = approve_plan(str(plan_id), consent_key)
     # Audit consent submit (hash only) and approval result
     try:
         if audit_append:
@@ -1125,7 +1196,7 @@ def execute(
     consent_key = body.consent_key
     if not plan_id or not consent_key:
         raise HTTPException(400, "plan_id and consent_key required")
-    if not is_plan_approved(plan_id, consent_key):
+    if not is_plan_approved(str(plan_id), consent_key):
         raise HTTPException(403, "Plan not approved")
     # Simulate execution result; real-world effects remain disabled.
     resp = {
@@ -1413,7 +1484,7 @@ def mirror_reflect(body: MirrorIn, request: Request) -> Dict[str, Any]:
 
 
 @app.get("/ser/series")
-def ser_series(limit: int = 500, request: Request = None) -> Dict[str, Any]:
+def ser_series(request: Request, limit: int = 500) -> Dict[str, Any]:
     """Return last N SER points (ts, score, env)."""
     # prefer live writer path; fall back to env default
     path = None
@@ -1539,8 +1610,8 @@ except Exception:
 # ------------------- Avatar endpoints (SAFE) -------------------
 @app.post("/avatar/create")
 async def avatar_create(
+    request: Request,
     body: Optional[AvatarCreateBody] = Body(default=None),
-    request: Request = None,
     _: bool = Depends(_auth),
     __: None = Depends(_rate_limit),
 ) -> Dict[str, Any]:
@@ -1912,8 +1983,8 @@ def planetary_status(
 
 @app.get("/avatar/status")
 def avatar_status(
+    request: Request,
     avatar_id: Optional[str] = None,
-    request: Request = None,
     _: bool = Depends(_auth),
     __: None = Depends(_rate_limit),
 ) -> Dict[str, Any]:
@@ -2060,7 +2131,8 @@ def master_status(request: Request) -> Dict[str, Any]:
     Safe: local deterministic computations only.
     """
     try:
-        from master_key import (
+        # Import from master_boot to ensure consistent signatures
+        from master_key.master_boot import (  # type: ignore
             get_master_key as _get_master_key,
             evaluate_master_state as _evaluate_master_state,
             boot_system as _boot_system,
@@ -2069,8 +2141,13 @@ def master_status(request: Request) -> Dict[str, Any]:
         return {"ok": False, "error": "master_key module unavailable", **_meta(request)}
     try:
         mk = _get_master_key()
-        snapshot = _evaluate_master_state()
-        boot_rep = _boot_system()
+        snapshot = _evaluate_master_state({})
+        boot_ctx = {
+            "coherence_hint": 0.8,
+            "substrate": {"S_EM": 0.8},
+            "risk_hint": 0.2,
+        }
+        boot_rep = _boot_system(boot_ctx)
         snap_dict = None
         if snapshot is not None:
             snap_dict = {
@@ -2083,7 +2160,7 @@ def master_status(request: Request) -> Dict[str, Any]:
                 "ethos_min": round(snapshot.ethos_min, 3),
                 "embodiment_phase": round(snapshot.embodiment_phase, 3),
             }
-        boot_summary = boot_rep.summary() if boot_rep else None
+        boot_summary = {"ok": bool(getattr(boot_rep, "ok", bool(boot_rep)))}
         return {
             "ok": True,
             "fingerprint": getattr(mk, "fingerprint", None),
@@ -2097,19 +2174,39 @@ def master_status(request: Request) -> Dict[str, Any]:
 
 
 @app.get("/master/awaken")
-def master_awaken(iterations: int = 2, request: Request = None) -> Dict[str, Any]:
+def master_awaken(request: Request, iterations: int = 2) -> Dict[str, Any]:
     """Run short awakening refinement loop; returns readiness classification."""
     try:
         from master_key import awaken_consciousness as _awaken_consciousness
     except Exception:
         raise HTTPException(503, "master_key module unavailable")
     try:
-        report = _awaken_consciousness(iterations=iterations)
-        rep_dict = report.as_dict() if hasattr(report, "as_dict") else {}
+        aw_ctx = {
+            "mirror": {"consistency": 0.8},
+            "coherence_hint": 0.8,
+            "risk_hint": 0.2,
+            "uncertainty_hint": 0.2,
+        }
+        report = _awaken_consciousness(iterations=iterations, context=aw_ctx)
+        rep_dict = report if isinstance(report, dict) else {}
+        readiness = str(rep_dict.get("readiness", "baseline"))
+        metrics = rep_dict.get("metrics") or {}
+        # Flatten key metrics for tests/consumers
+        awakening = {
+            "readiness": readiness,
+            "coherence": metrics.get("coherence"),
+            "impetus": metrics.get("impetus"),
+            "risk": metrics.get("risk"),
+            "uncertainty": metrics.get("uncertainty"),
+            "substrate": metrics.get("S_EM"),
+            "mirror": metrics.get("mirror_consistency"),
+            "ethos_min": min(list((metrics.get("ethos") or {}).values()) or [0.0]),
+            "metrics": metrics,
+        }
         return {
             "ok": True,
             "iterations": iterations,
-            "awakening": rep_dict,
+            "awakening": awakening,
             **_meta(request),
         }
     except HTTPException:
@@ -2141,7 +2238,8 @@ def internet_authorize(
     try:
         resp = require_approval("enable_capability", details)
         plan_id = resp.get("plan_id")
-        ok = approve_plan(plan_id, body.consent_key)
+        plan_id_str = str(plan_id) if plan_id is not None else ""
+        ok = approve_plan(plan_id_str, body.consent_key) if plan_id_str else False
         if not ok:
             raise HTTPException(403, "approval failed")
     except Exception:
@@ -2232,7 +2330,8 @@ def internet_fetch(
                 os.path.join(os.path.dirname(__file__), "state", "internet", "cache")
             ).resolve()
             cache_dir.mkdir(parents=True, exist_ok=True)
-            # derive safe filename; allow common web asset extensions so the webview can consume them
+            # derive safe filename; allow common web asset extensions
+            # so the webview can consume them
             fname = (parsed.path.rsplit("/", 1)[-1] or "index").split("?")[0] or "index"
             allowed_exts = [
                 ".json",

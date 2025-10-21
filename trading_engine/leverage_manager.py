@@ -27,10 +27,21 @@ from symbolic_core.symbolic_equation41 import SymbolicEquation41
 from trading.helpers.se41_trading_gate import se41_signals, ethos_decision, se41_numeric
 
 # Optional cross-module imports (guarded)
-try:
-    from trading_engine.position_manager import Position, PositionType  # noqa: F401
-    from trading_engine.risk_management import RiskAssessment  # noqa: F401
+# Minimal stubs to avoid cross-module type identity issues; real modules are optional
+class Position:  # type: ignore
+    pass
 
+
+class PositionType:  # type: ignore
+    pass
+
+
+class RiskAssessment:  # type: ignore
+    pass
+
+try:
+    # If available, import for side-effects/documentation, but keep our local stubs for types
+    import trading_engine.position_manager  # noqa: F401
     TRADE_COMPONENTS_AVAILABLE = True
 except Exception:
     TRADE_COMPONENTS_AVAILABLE = False

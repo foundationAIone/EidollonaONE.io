@@ -1,0 +1,30 @@
+version: 1
+pinnacle: { id: throne_room, name: "Eidollona — Master Chamber", avatar_id: steward_prime, route: /citadel/throne,
+            panels: [status, gate_ring, audit, ethos], privacy_level: high }
+courtyard: { id: court_yard, name: "Citadel Court Yard", route: /citadel/court, quorum: 2, timeout_sec: 12,
+            transcript_policy: { store: true, reveal_wings: auto } }
+rooms:
+  - { id: room_serve_it,    name: "Serve-it Guild Hall", avatar_id: serve_it, route: /citadel/serveit,
+      panels: [quotes, jobs, comfort], privacy_level: medium, gate_focus: [consent,privacy_pii,latency_compute],
+      bots: [provider_matcher, quote_orchestrator] }
+  - { id: room_fancomp,     name: "FanComp Hall", avatar_id: fancomp, route: /citadel/fancomp,
+      panels: [ip_vault, moneypool, policy], privacy_level: medium, gate_focus: [consent,ext_policy,language_gate],
+      bots: [ip_vault_mgr, moneypool_planner] }
+  - { id: room_treasury,    name: "Treasury — Serplus Ledger", avatar_id: treasury_serplus, route: /citadel/treasury,
+      panels: [serplus_state, allowances, audit], privacy_level: high, gate_focus: [power_caps,auditability,data_integrity],
+      bots: [credit_sim, debit_sim] }
+  - { id: room_markets,     name: "Markets — Paper Trading", avatar_id: markets_trading, route: /citadel/markets,
+      panels: [paper_plans, risk_envelopes, tails], privacy_level: high, gate_focus: [tail_risk,latency_compute,alignment],
+      bots: [scalper, momentum, mean_reversion, pairs, options_delta, options_gamma] }
+  - { id: room_security,    name: "Security / EMP Guard", avatar_id: security_emp, route: /citadel/security,
+      panels: [alerts, posture, policies], privacy_level: high, gate_focus: [consent,privacy_pii,ext_policy],
+      bots: [guard_sentinel, posture_checker] }
+  - { id: room_sovereignty, name: "Sovereignty / Legal", avatar_id: sovereignty_legal, route: /citadel/sovereignty,
+      panels: [charters, policies], privacy_level: high, gate_focus: [alignment,ext_policy,auditability], bots: [policy_explainer] }
+  - { id: room_compliance,  name: "Compliance / Audit", avatar_id: compliance_audit, route: /citadel/compliance,
+      panels: [attestations, reasons, diffs], privacy_level: high, gate_focus: [auditability,data_integrity,language_gate],
+      bots: [attestations_bot] }
+  - { id: room_learning,    name: "Learning / Eval Coach", avatar_id: learning_eval, route: /citadel/learning,
+      panels: [evals, metrics], privacy_level: low, gate_focus: [alignment,data_integrity], bots: [eval_runner, metrics_aggregator] }
+  - { id: room_quantum,     name: "Quantum Bridge / Research", avatar_id: quantum_bridge, route: /citadel/quantum,
+      panels: [phase_map, budgets], privacy_level: medium, gate_focus: [latency_compute,tail_risk], bots: [phase_scheduler, budget_allocator] }

@@ -12,7 +12,7 @@ import logging
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -22,7 +22,8 @@ from scipy.fft import fft
 
 # Add workspace to path for integration
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from symbolic_core.symbolic_equation import SymbolicEquation41, SE41Signals
+from symbolic_core.symbolic_equation41 import SymbolicEquation41
+from symbolic_core.symbolic_equation import SE41Signals
 from reality_manipulation.priority_9_master import get_priority_9_status
 from symbolic_io_interface.priority_10_master import get_priority_10_status
 
@@ -84,7 +85,7 @@ class SymbolicEquationPlotter:
         # Core integrations
         self.symbolic_equation = SymbolicEquation41()
         self.reality_interface = None
-        self._signals: SE41Signals | None = None
+        self._signals: Optional[SE41Signals] = None
 
         # Plotting state
         self.is_plotting = False
@@ -99,9 +100,9 @@ class SymbolicEquationPlotter:
 
         # Matplotlib setup
         plt.style.use("dark_background")
-        self.fig = None
-        self.axes = {}
-        self.animation_objects = {}
+        self.fig: Optional[Any] = None
+        self.axes: Dict[str, Any] = {}
+        self.animation_objects: Dict[str, Any] = {}
 
         # Color schemes
         self.equation_colors = {
@@ -243,7 +244,9 @@ class SymbolicEquationPlotter:
             )
             self.axes["phase_space"].set_xlabel("Consciousness", color="white")
             self.axes["phase_space"].set_ylabel("Coherence", color="white")
-            self.axes["phase_space"].set_zlabel("Ethos", color="white")
+            set_zlabel = getattr(self.axes["phase_space"], "set_zlabel", None)
+            if callable(set_zlabel):
+                set_zlabel("Ethos", color="white")
 
             # Configure 2D trajectory projection
             self.axes["trajectory"].set_title(
@@ -279,6 +282,21 @@ class SymbolicEquationPlotter:
 
         except Exception as e:
             self.logger.error(f"Consciousness phase space plot setup failed: {e}")
+
+    async def _setup_harmonic_analysis_plot(self) -> None:
+        """SAFE placeholder setup for harmonic analysis plot."""
+        await self._setup_real_time_evolution_plot()
+        self.current_plot_type = "harmonic_analysis"
+
+    async def _setup_frequency_spectrum_plot(self) -> None:
+        """SAFE placeholder setup for frequency spectrum plot."""
+        await self._setup_real_time_evolution_plot()
+        self.current_plot_type = "frequency_spectrum"
+
+    async def _setup_multi_dimensional_analysis_plot(self) -> None:
+        """SAFE placeholder setup for multi-dimensional analysis plot."""
+        await self._setup_real_time_evolution_plot()
+        self.current_plot_type = "multi_dimensional_analysis"
 
     async def _run_plotting_loop(self):
         """Main plotting loop that updates visualizations in real-time"""
@@ -442,7 +460,7 @@ class SymbolicEquationPlotter:
                 ]
 
                 # Compute FFT
-                fft_values = fft(recent_outputs)
+                fft_values = np.asarray(fft(recent_outputs))
                 magnitude_spectrum = np.abs(
                     fft_values[: self.frequency_analysis_window // 2]
                 )
@@ -597,6 +615,20 @@ class SymbolicEquationPlotter:
 
         except Exception as e:
             self.logger.error(f"Real-time evolution update failed: {e}")
+
+    async def _update_harmonic_analysis(self, plot_data: SymbolicPlotData) -> None:
+        """Placeholder harmonic analysis updater (SAFE mode)."""
+        await self._update_real_time_evolution(plot_data, time.time())
+
+    async def _update_frequency_spectrum(self, plot_data: SymbolicPlotData) -> None:
+        """Placeholder frequency spectrum updater (SAFE mode)."""
+        await self._update_real_time_evolution(plot_data, time.time())
+
+    async def _update_multi_dimensional_analysis(
+        self, plot_data: SymbolicPlotData
+    ) -> None:
+        """Placeholder multi-dimensional analysis updater (SAFE mode)."""
+        await self._update_real_time_evolution(plot_data, time.time())
 
     async def _update_consciousness_phase_space(self, plot_data: SymbolicPlotData):
         """Update consciousness phase space visualization"""

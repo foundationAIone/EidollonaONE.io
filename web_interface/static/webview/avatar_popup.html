@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Eidollona — Avatar Preview</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:#0b0f14; color:#e6f0ff; margin:0; }
+    .wrap { max-width: 640px; margin: 24px auto; padding: 16px; background: #121a22; border:1px solid #223; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.35);}
+    h1 { margin: 0 0 8px 0; font-size: 20px; }
+    .row { display:flex; gap:12px; align-items:center; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid #345; background:#0f1620;}
+    .ok { color:#7cfc9a; border-color:#2e7; }
+    .warn { color:#ffd166; border-color:#cc9; }
+    .fail { color:#ff7b7b; border-color:#f77; }
+    .avatar { display:flex; gap:16px; align-items:center; margin:16px 0; }
+    .face { width:96px; height:96px; border-radius:50%; background: radial-gradient(60% 60% at 50% 40%, #3aaef0 0%, #0b3d66 60%, #072133 100%); border:2px solid #2a4a66; position:relative; box-shadow:0 0 24px rgba(58,174,240,.35);}
+    .wings.show::after { content:""; position:absolute; inset:-10px; border-radius:50%; box-shadow: 0 0 24px 8px rgba(84,240,185,.35), 0 0 64px 18px rgba(84,240,185,.25); }
+    .wings.hide::after { content:none; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;}
+    .cell { background:#0e151d; border:1px solid #223; border-radius:8px; padding:10px; }
+  .actions { margin-top:12px; }
+  .note { margin-top:10px; opacity:.8; font-size:12px; }
+    button { background:#1b2734; color:#e6f0ff; border:1px solid #345; padding:8px 12px; border-radius:8px; cursor:pointer;}
+    button:hover { background:#223145; }
+    a { color:#a2d2ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="row">
+      <h1>Avatar Preview — <span id="name">steward_prime</span></h1>
+      <span id="vis" class="pill">visibility: ...</span>
+      <span id="tier" class="pill">tier: ...</span>
+    </div>
+    <div class="avatar">
+      <div id="face" class="face wings"></div>
+      <div>
+        <div>readiness: <span id="readiness" class="pill">...</span></div>
+        <div class="grid">
+          <div class="cell">risk: <strong id="risk">...</strong></div>
+          <div class="cell">RA: <strong id="ra">...</strong></div>
+          <div class="cell">wings: <strong id="w">...</strong></div>
+          <div class="cell">impetus: <strong id="imp">...</strong></div>
+        </div>
+        <div class="actions">
+          <button id="popupBtn">Open Popup</button>
+          <small> (opens a separate window with this preview)</small>
+        </div>
+      </div>
+    </div>
+    <div id="note" class="note"></div>
+  </div>
+
+<script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+(async function () {
+  const api = window.location.origin.replace(/\/$/, '') + "/api/avatar/preview?id=steward_prime";
+  const note = document.getElementById("note");
+  try {
+    const response = await fetch(api, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    if (!data.ok) {
+      throw new Error(data.error || "preview not ok");
+    }
+
+    document.getElementById("name").textContent = data.name || data.id;
+    document.getElementById("tier").textContent = `tier: ${data.tier || "n/a"}`;
+
+    const visibility = data.visibility || "unknown";
+    const visTag = document.getElementById("vis");
+    visTag.textContent = `visibility: ${visibility}`;
+    visTag.className = `pill ${visibility === "show" ? "ok" : "warn"}`;
+
+    const se = data.se || {};
+    const ready = se.readiness || "n/a";
+    const readinessTag = document.getElementById("readiness");
+    readinessTag.textContent = ready;
+    readinessTag.className = `pill ${ready === "prime_ready" || ready === "ready" ? "ok" : "warn"}`;
+
+    document.getElementById("risk").textContent = Number(se.risk ?? 1.0).toFixed(3);
+    document.getElementById("ra").textContent = Number(se.RA ?? 0.0).toFixed(3);
+    document.getElementById("w").textContent = Number(se.wings ?? 1.0).toFixed(3);
+    document.getElementById("imp").textContent = Number(se.impetus ?? 0.0).toFixed(3);
+
+    const face = document.getElementById("face");
+    face.className = `face wings ${visibility === "show" ? "show" : "hide"}`;
+
+    document.getElementById("note").innerHTML = `API: <a href="${api}" target="_blank" rel="noopener">${api}</a>`;
+
+    const host = face.parentElement;
+    const policy = data.load_policy || "none";
+
+    if (policy === "glb" && data.model_url) {
+      const mount = document.createElement('div');
+      mount.style.width = '320px';
+      mount.style.height = '360px';
+      mount.style.border = '1px solid #223';
+      mount.style.borderRadius = '8px';
+      mount.style.background = '#0e151d';
+      mount.style.marginTop = '12px';
+      host.appendChild(mount);
+
+      const W = mount.clientWidth;
+      const H = mount.clientHeight;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 100);
+      camera.position.set(0, 1.2, 2.2);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(W, H);
+      mount.appendChild(renderer.domElement);
+      scene.add(new THREE.AmbientLight(0x8899ff, 0.25));
+      const light = new THREE.DirectionalLight(0xffffff, 1.0);
+      light.position.set(1, 2, 2);
+      scene.add(light);
+
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        data.model_url,
+        (gltf) => {
+          const root = gltf.scene;
+          scene.add(root);
+          root.traverse((obj) => {
+            if (obj.isMesh) {
+              obj.castShadow = true;
+              obj.receiveShadow = true;
+            }
+          });
+          const box = new THREE.Box3().setFromObject(root);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z) || 1;
+          const scale = 1.0 / maxDim;
+          root.scale.setScalar(scale * 1.8);
+          const center = new THREE.Vector3();
+          box.getCenter(center);
+          root.position.sub(center.multiplyScalar(scale));
+
+          (function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+          })();
+
+          window.addEventListener('resize', () => {
+            const width = mount.clientWidth;
+            const height = mount.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+          });
+        },
+        undefined,
+        (err) => {
+          console.warn('GLB load failed', err);
+        }
+      );
+    } else if (data.portrait_url) {
+      const img = new Image();
+      img.src = data.portrait_url;
+      img.style.width = '320px';
+      img.style.height = 'auto';
+      img.style.border = '1px solid #223';
+      img.style.borderRadius = '8px';
+      img.style.marginTop = '12px';
+      host.appendChild(img);
+    }
+  } catch (error) {
+    note.textContent = `Error: ${error} — Is the preview server running?`;
+  }
+})();
+
+document.getElementById("popupBtn").addEventListener("click", () => {
+  const width = 420;
+  const height = 560;
+  const left = (window.screen.width - width) / 2;
+  const top = (window.screen.height - height) / 2;
+  window.open(window.location.href, "eidollona_avatar", `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+});
+</script>
+</body>
+</html>

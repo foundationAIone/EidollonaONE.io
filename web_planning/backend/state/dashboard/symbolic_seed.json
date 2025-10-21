@@ -1,0 +1,43 @@
+{
+  "context": {
+    "coherence_hint": 0.82,
+    "extras": {
+      "bucket": "dashboard",
+      "relative_path": "web_planning\\backend\\state\\dashboard"
+    },
+    "mirror": {
+      "consistency": 0.79
+    },
+    "risk_hint": 0.18,
+    "substrate": {
+      "S_EM": 0.85
+    },
+    "uncertainty_hint": 0.24
+  },
+  "generated_at": "2025-10-10T13:46:06.146289+00:00",
+  "generator": "SymbolicEquation41",
+  "notes": [
+    "Seeded automatically to document baseline symbolic posture for this directory.",
+    "Replace with live data as pipelines populate real outputs."
+  ],
+  "signals": {
+    "S_EM": 0.85,
+    "coherence": 0.82,
+    "embodiment": {
+      "cadence_spm": 77.80764000000002,
+      "phase": 0.0,
+      "step_len_m": 0.3359186
+    },
+    "ethos": {
+      "authenticity": 0.9,
+      "enrichment": 0.9,
+      "integrity": 0.9,
+      "responsibility": 0.88
+    },
+    "explain": "SymbolicEquation41:compat",
+    "impetus": 0.5311960000000001,
+    "mirror_consistency": 0.79,
+    "risk": 0.18,
+    "uncertainty": 0.24
+  }
+}

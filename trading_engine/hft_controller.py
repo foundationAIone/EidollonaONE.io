@@ -421,7 +421,7 @@ class QuantumExecutionEngine:
         self._accumulate(exec_obj, ok)
         return exec_obj
 
-    def _send(self, signal: HFTSignal, qty: float, px: float) -> (bool, float):
+    def _send(self, signal: HFTSignal, qty: float, px: float) -> tuple[bool, float]:
         """
         Broker/venue adapter stub — replace with real synchronous or async venue call.
         Return (success, fill_price).

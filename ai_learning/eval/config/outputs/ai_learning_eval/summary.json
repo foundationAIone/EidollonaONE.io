@@ -1,0 +1,73 @@
+{
+  "started_at": 1760359579.5479238,
+  "completed_at": 1760359579.5479238,
+  "total_cases": 5,
+  "passed_cases": 5,
+  "pass_rate": 1.0,
+  "per_metric": {
+    "exact_match": 1.0,
+    "token_f1": 1.0,
+    "keyword_recall": 1.0
+  },
+  "metric_thresholds": {
+    "exact_match": 0.6,
+    "token_f1": 0.7,
+    "keyword_recall": 0.75
+  },
+  "aggregate_thresholds": {
+    "minimum_pass_rate": 0.7,
+    "minimum_cases_passed": 4
+  },
+  "cases": [
+    {
+      "sample_id": "arithmetic_01",
+      "prediction": "19",
+      "metrics": {
+        "exact_match": 1.0,
+        "token_f1": 1.0,
+        "keyword_recall": 1.0
+      },
+      "passed": true
+    },
+    {
+      "sample_id": "fact_01",
+      "prediction": "Paris",
+      "metrics": {
+        "exact_match": 1.0,
+        "token_f1": 1.0,
+        "keyword_recall": 1.0
+      },
+      "passed": true
+    },
+    {
+      "sample_id": "reasoning_01",
+      "prediction": "Carol",
+      "metrics": {
+        "exact_match": 1.0,
+        "token_f1": 1.0,
+        "keyword_recall": 1.0
+      },
+      "passed": true
+    },
+    {
+      "sample_id": "planning_01",
+      "prediction": "Identify available space;Survey community interest",
+      "metrics": {
+        "exact_match": 1.0,
+        "token_f1": 1.0,
+        "keyword_recall": 1.0
+      },
+      "passed": true
+    },
+    {
+      "sample_id": "math_02",
+      "prediction": "48",
+      "metrics": {
+        "exact_match": 1.0,
+        "token_f1": 1.0,
+        "keyword_recall": 1.0
+      },
+      "passed": true
+    }
+  ]
+}

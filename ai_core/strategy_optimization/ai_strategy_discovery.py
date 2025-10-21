@@ -15,30 +15,17 @@ Why
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import random
 
+from symbolic_core.symbolic_equation41 import (  # type: ignore
+    SymbolicEquation41,
+    SE41Signals,
+)
+
 try:  # pragma: no cover
-    from symbolic_core.symbolic_equation41 import SymbolicEquation41, SE41Signals  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
 except Exception:  # pragma: no cover
-
-    class SE41Signals:
-        def __init__(self, risk=0.4, uncertainty=0.4, coherence=0.6):
-            self.risk = risk
-            self.uncertainty = uncertainty
-            self.coherence = coherence
-
-    class SymbolicEquation41:  # type: ignore
-        def evaluate(self, ctx):
-            class S:
-                pass
-
-            s = S()
-            s.risk = ctx.get("risk_hint", 0.4)
-            s.uncertainty = ctx.get("uncertainty_hint", 0.4)
-            s.coherence = ctx.get("coherence_hint", 0.6)
-            return s
 
     def assemble_se41_context(**kw):
         return kw
@@ -62,7 +49,7 @@ class AIStrategyDiscovery:
     def __init__(
         self,
         feature_pool: List[str],
-        symbolic: Optional[SymbolicEquation41] = None,
+        symbolic: Optional[Any] = None,
         seed: int = 11,
     ) -> None:
         random.seed(seed)
@@ -96,7 +83,7 @@ class AIStrategyDiscovery:
         for _ in range(n):
             comps = self._random_formula()
             metrics = self._score_components(comps)
-            se = self.symbolic.evaluate(
+            se: SE41Signals = self.symbolic.evaluate(
                 assemble_se41_context(
                     risk_hint=metrics["risk"],
                     uncertainty_hint=metrics["unc"],

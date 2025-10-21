@@ -1,0 +1,9 @@
+impact:
+  perm: 1.0e-6
+  temp: 3.0e-6
+ow_resilience:
+  rho: 0.15
+router:
+  risk_aversion: 0.5
+  pov_min: 0.05
+  pov_max: 0.20

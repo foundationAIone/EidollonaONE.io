@@ -1,0 +1,9 @@
+version: 1
+default: now          # now | line | loop
+loop:
+  phases: 12
+  window_minutes: 1440
+line:
+  window_days: 7
+now:
+  emphasize: readiness

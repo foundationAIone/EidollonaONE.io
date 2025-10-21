@@ -1,0 +1,22 @@
+{
+  "intents": [
+    "analyze",
+    "audit",
+    "summarize"
+  ],
+  "domains": [
+    "finance",
+    "operations",
+    "governance"
+  ],
+  "priorities": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "perf_modes": [
+    "NORMAL",
+    "BOOST",
+    "THROTTLE"
+  ]
+}

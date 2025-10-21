@@ -5,14 +5,16 @@ SE41 v4.1+ Liquidity Manager
 Key Features
 ------------
 1. Unified Signal Intake: Pulls fresh SE41Signals every cycle (se41_signals()).
-2. Bounded Target Derivation: Cash / stable / credit usage derived via symbolic-bounded formulas:
-	  - Rewards: coherence, mirror_consistency, ethos (minimum pillar)
-	  - Dampers: risk, uncertainty, volatility, projected net outflows
-3. Ethos Gating: Any reduction of defensive buffers (deploy cash, reduce stables, open credit) is gated.
+2. Bounded Target Derivation:
+   Cash / stable / credit usage derived via symbolic-bounded formulas:
+    - Rewards: coherence, mirror_consistency, ethos (minimum pillar)
+    - Dampers: risk, uncertainty, volatility, projected net outflows
+3. Ethos Gating:
+   Any reduction of defensive buffers (deploy cash, reduce stables, open credit) is gated.
 4. Safety Rails:
-	  - Minimum cash percent
-	  - LCR (Liquidity Coverage Ratio) minimum + warn bias
-	  - Credit utilization cap
+    - Minimum cash percent
+    - LCR (Liquidity Coverage Ratio) minimum + warn bias
+    - Credit utilization cap
 5. Gradual Adjustment: Fractional progress toward targets each apply() to avoid shocks.
 6. Structured Recommendations: compute_targets() -> recommend() -> apply() separation.
 7. JSONL Journaling: Every recommendation application & rail block is appended for audit / replay.
@@ -344,7 +346,6 @@ class LiquidityManager:
         self, snap: LiquiditySnapshot, rec: LiquidityRecommendation
     ) -> Dict[str, Any]:
         se = self._last_signals or {}
-        result = {"applied": False, "reason": "noop"}
 
         def _projected(
             s: LiquiditySnapshot, dc: float, ds: float, dcr: float

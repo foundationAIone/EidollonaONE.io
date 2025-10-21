@@ -251,8 +251,7 @@ class MarginController:
         unc = float(se.get("uncertainty", 0.25))
 
         # Requireds & rails
-        req = self.compute_requireds(snap)
-        maint_req = req["maintenance_req"]
+        # Compute equity and gross notional; other rails are handled in recommend/apply
         eq = max(snap.equity, 1e-9)
         gross = snap.gross_notional
 
@@ -293,8 +292,7 @@ class MarginController:
         Convert targets into an executable recommendation.
         """
         rid = f"margrec_{int(time.time())}"
-        req = self.compute_requireds(snap)
-        maint_req = req["maintenance_req"]
+        maint_req = self.compute_requireds(snap)["maintenance_req"]
 
         # equity buffer shortfall
         current_buffer = max(0.0, snap.equity - maint_req)
@@ -305,10 +303,11 @@ class MarginController:
         reduce_expo = max(0.0, snap.gross_notional - targets.target_exposure)
 
         # Choose primary action
-        if req["status"] in (MarginStatus.LIQUIDATION.value,):
+        status_val = self.compute_requireds(snap)["status"]
+        if status_val in (MarginStatus.LIQUIDATION.value,):
             act = MarginAction.FULL_LIQUIDATION
             reason = "rail_liquidation_trigger"
-        elif req["status"] in (MarginStatus.MARGIN_CALL.value,):
+        elif status_val in (MarginStatus.MARGIN_CALL.value,):
             # margin call → raise equity buffer or reduce exposure
             if delta_buffer > 0:
                 act = MarginAction.RAISE_EQUITY_BUFFER

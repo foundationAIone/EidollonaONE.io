@@ -23,7 +23,14 @@ import os
 
 # Add workspace to path for integration
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from symbolic_core.symbolic_equation import SymbolicEquation41, SE41Signals
+from symbolic_core.symbolic_equation41 import SymbolicEquation41  # shim provides legacy API
+from symbolic_core.symbolic_equation import SE41Signals
+from typing import Protocol
+
+class _SE41Like(Protocol):
+    def get_current_state_summary(self) -> Dict[str, Any]: ...
+    def get_consciousness_metrics(self) -> Dict[str, float]: ...
+    def consciousness_shift(self, delta: float) -> None: ...
 
 
 class IOOperationType(Enum):
@@ -94,9 +101,9 @@ class SymbolicIOSynchronizer:
         self.logger = self._setup_logging()
 
         # Core integrations
-        self.symbolic_equation = SymbolicEquation41()
+        self.symbolic_equation = SymbolicEquation41()  # type: _SE41Like
         self.reality_interface = None
-        self._signals: SE41Signals | None = None
+        self._signals: Optional[SE41Signals] = None
 
         # Synchronization state
         self.is_running = False
@@ -187,7 +194,7 @@ class SymbolicIOSynchronizer:
         priority: IOPriority = IOPriority.NORMAL,
         target_component: Optional[str] = None,
         callback: Optional[Callable] = None,
-        dependencies: List[str] = None,
+        dependencies: Optional[List[str]] = None,
         timeout: float = 30.0,
     ) -> str:
         """Schedule a new I/O operation for synchronized execution"""
@@ -362,7 +369,28 @@ class SymbolicIOSynchronizer:
 
             if update_type == "real_time":
                 visualizer = visual_feedback.get_consciousness_visualizer()
-                return await visualizer.update_real_time_display(consciousness_data)
+                update_methods = [
+                    "update_real_time_display",
+                    "update_display",
+                    "render_real_time_display",
+                ]
+                for method_name in update_methods:
+                    method = getattr(visualizer, method_name, None)
+                    if callable(method):
+                        try:
+                            result = method(consciousness_data)
+                        except TypeError:
+                            result = method()
+                        if asyncio.iscoroutine(result):
+                            return await result
+                        return result
+                self.logger.warning(
+                    "No compatible real-time update method found on consciousness visualizer"
+                )
+                return {
+                    "status": "visual_update_skipped",
+                    "reason": "unsupported_visualizer_method",
+                }
             elif update_type == "snapshot":
                 return await visual_feedback.create_consciousness_snapshot()
             else:
@@ -664,14 +692,14 @@ if __name__ == "__main__":
         await start_io_synchronization()
 
         # Schedule test operations
-        op1 = schedule_io_operation(
+        schedule_io_operation(
             IOOperationType.CONSCIOUSNESS_QUERY,
             "test_component",
             {"query_type": "status"},
             IOPriority.HIGH,
         )
 
-        op2 = schedule_io_operation(
+        schedule_io_operation(
             IOOperationType.VISUAL_UPDATE,
             "test_component",
             {"update_type": "real_time", "consciousness_data": {}},

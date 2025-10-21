@@ -29,7 +29,7 @@ from typing import Dict, Optional, List, Any, Tuple
 
 # v4.1 primitives (fallback only, main path uses se41_signals())
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from symbolic_core.se41_context import assemble_se41_context
+from symbolic_core.context_builder import assemble_se41_context
 
 # Shared SE41 helpers (single source of truth — NO risky in-file injections)
 from trading.helpers.se41_trading_gate import se41_signals, ethos_decision

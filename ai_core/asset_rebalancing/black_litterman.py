@@ -69,10 +69,9 @@ def black_litterman_posterior(
     if C.shape != (n, n):
         return [0.0] * n, [0.0] * n
     try:
-        C_reg = C + np.eye(n) * 1e-6
-        invC = np.linalg.pinv(C_reg, rcond=1e-8)
-        # Reverse optimization (equilibrium returns)
+        # Equilibrium returns via reverse optimization
         pi = risk_aversion * (C @ w)
+        # If no views provided, posterior equals equilibrium
         if P is None or Q is None:
             return pi.tolist(), pi.tolist()
         Pm = _arr(P)
@@ -82,19 +81,21 @@ def black_litterman_posterior(
         k, nP = Pm.shape
         if nP != n or Qv.shape[0] != k:
             return pi.tolist(), pi.tolist()
+        # View uncertainty matrix
+        Omega = None
         if omega is None:
             Omega = np.diag(np.full(k, 1e-3))
         else:
             Omega = _arr(omega)
             if Omega is None or Omega.shape != (k, k):
                 Omega = np.diag(np.full(k, 1e-3))
-        # Posterior formula
-        tauC = tau * C
+        # Posterior
+        tauC = tau * (C + np.eye(n) * 1e-6)
         middle = np.linalg.pinv(Pm @ tauC @ Pm.T + Omega, rcond=1e-8)
         mu_post = pi + tauC @ Pm.T @ middle @ (Qv - Pm @ pi)
         return pi.tolist(), mu_post.tolist()
     except Exception:
-        return [0.0] * len(market_weights), [0.0] * len(market_weights)
+        return [0.0] * n, [0.0] * n
 
 
 def black_litterman_weights(
@@ -124,6 +125,11 @@ def black_litterman_weights(
         if C is None or C.shape != (n, n):
             return list(market_weights)
         post_arr = _arr(post)
+        if post_arr is None:
+            return list(market_weights)
+        post_arr = post_arr.reshape(-1)
+        if post_arr.shape[0] != n:
+            return list(market_weights)
         C_reg = C + np.eye(n) * 1e-6
         invC = np.linalg.pinv(C_reg, rcond=1e-8)
         raw = invC @ post_arr

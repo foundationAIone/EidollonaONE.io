@@ -1,4 +1,6 @@
 # consciousness_engine/scheduler.py
+from __future__ import annotations
+
 """
 EidollonaONE Awareness Scheduler Module
 
@@ -16,13 +18,18 @@ Notes on Windows safety:
 """
 
 # Imports
-from ai_core.quantum_core.quantum_driver import QuantumDriver
-from consciousness_engine.cognition_regulator import CognitionRegulator
-from consciousness_engine.awareness_monitor import AwarenessMonitor
 import logging
 import sys
 from pathlib import Path
-from typing import Callable, Any, List
+from typing import Any, Callable, List
+
+from ai_core.quantum_core.quantum_driver import QuantumDriver
+from symbolic_core.symbolic_equation import (
+    SymbolicEquation41,
+    assemble_se41_context_from_summaries,
+    build_se41_context,
+    compute_verification_score,
+)
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -33,6 +40,59 @@ sys.path.insert(0, str(project_root))
 logger = logging.getLogger("AwarenessScheduler")
 logging.basicConfig(level=logging.INFO)
 
+
+def _load_awareness_monitor() -> Any:
+    try:
+        from consciousness_engine.awareness_monitor import AwarenessMonitor as _AwarenessMonitor  # type: ignore
+
+        return _AwarenessMonitor()
+    except Exception as exc:  # pragma: no cover - optional dependency
+        logger.warning("AwarenessMonitor unavailable (%s); using SE41 fallback", exc)
+
+        class _FallbackAwarenessMonitor:
+            def __init__(self) -> None:
+                self._engine = SymbolicEquation41()
+
+            def check_awareness_states(self) -> None:
+                ctx = build_se41_context(coherence_hint=0.78)
+                sig = self._engine.evaluate(ctx)
+                score = compute_verification_score(sig)
+                logger.info(
+                    "[fallback] awareness check coherence=%.3f impetus=%.3f score=%.3f",
+                    sig.coherence,
+                    sig.impetus,
+                    score,
+                )
+
+        return _FallbackAwarenessMonitor()
+
+
+def _load_cognition_regulator() -> Any:
+    try:
+        from consciousness_engine.cognition_regulator import CognitionRegulator as _CognitionRegulator  # type: ignore
+
+        return _CognitionRegulator()
+    except Exception as exc:  # pragma: no cover - optional dependency
+        logger.warning("CognitionRegulator unavailable (%s); using SE41 fallback", exc)
+
+        class _FallbackCognitionRegulator:
+            def __init__(self) -> None:
+                self._engine = SymbolicEquation41()
+
+            def regulate_cognition(self) -> None:
+                ctx = assemble_se41_context_from_summaries([
+                    {"coherence_hint": 0.8, "risk_hint": 0.18, "mirror_consistency": 0.75},
+                    {"uncertainty_hint": 0.22, "substrate": {"S_EM": 0.8}},
+                ])
+                sig = self._engine.evaluate(ctx)
+                readiness = compute_verification_score(sig)
+                logger.info(
+                    "[fallback] cognition regulation coherence=%.3f readiness=%.3f",
+                    sig.coherence,
+                    readiness,
+                )
+
+        return _FallbackCognitionRegulator()
 
 class _NoOpScheduler:
     """Minimal scheduler shim when APScheduler is unavailable.
@@ -62,8 +122,8 @@ class AwarenessScheduler:
     def __init__(self):
         # Delay APScheduler import to runtime to avoid entry_points scans at import time
         self.scheduler = None
-        self.awareness_monitor = AwarenessMonitor()
-        self.cognition_regulator = CognitionRegulator()
+        self.awareness_monitor = _load_awareness_monitor()
+        self.cognition_regulator = _load_cognition_regulator()
         self.quantum_driver = QuantumDriver()
 
     def start_scheduling(self):
@@ -113,6 +173,10 @@ class AwarenessScheduler:
         """
         Stops all scheduled tasks gracefully.
         """
+        if self.scheduler is None:
+            logger.warning("Scheduler stop requested before initialization.")
+            return
+
         self.scheduler.shutdown(wait=False)
         logger.info("Scheduler stopped. All scheduled tasks terminated.")
 

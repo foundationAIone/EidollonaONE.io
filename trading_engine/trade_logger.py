@@ -41,32 +41,31 @@ SE41 + Ethos + Integrity:
 
 # Optional dependencies from engine modules (kept soft)
 try:
-    from trading_engine.ai_trade_executor import (
-        TradeType,
-    )
-    from trading_engine.order_management import OrderType, OrderState
-    from trading_engine.position_manager import PositionType
-
+    # Keep flag for potential runtime integrations; avoid importing to prevent type identity issues
     TRADE_COMPONENTS_AVAILABLE = True
 except Exception:
     TRADE_COMPONENTS_AVAILABLE = False
 
-    # minimal shims for smoke usage
-    class TradeType(Enum):
-        BUY = "buy"
-        SELL = "sell"
+# Local enums used for typing/logging; when runtime modules are available,
+# their values are used in payloads, but types here remain stable for analysis.
+class TradeType(Enum):
+    BUY = "buy"
+    SELL = "sell"
 
-    class OrderType(Enum):
-        MARKET = "market"
-        LIMIT = "limit"
 
-    class OrderState(Enum):
-        CREATED = "created"
-        FILLED = "filled"
+class OrderType(Enum):
+    MARKET = "market"
+    LIMIT = "limit"
 
-    class PositionType(Enum):
-        LONG = "long"
-        SHORT = "short"
+
+class OrderState(Enum):
+    CREATED = "created"
+    FILLED = "filled"
+
+
+class PositionType(Enum):
+    LONG = "long"
+    SHORT = "short"
 
 
 # ---------------------------------------------------------------------------
@@ -676,10 +675,12 @@ class TradeLogger:
                 "explain": f"log.{entry.log_type.value}",
             }
         )
-        decision = ethos_decision(sig)
-        d = decision.get("decision", "hold")
+        sig_dict = sig or {}
+        decision_tuple = ethos_decision(sig_dict)  # type: ignore[arg-type]
+        d = decision_tuple[0] if isinstance(decision_tuple, tuple) else str(decision_tuple)
+        reason = decision_tuple[1] if isinstance(decision_tuple, tuple) and len(decision_tuple) > 1 else ""
         self.log.info(
-            f"Ethos(log): {d} | type={entry.log_type.value} reason={decision.get('reason','')}"
+            f"Ethos(log): {d} | type={entry.log_type.value} reason={reason}"
         )
         return d == "allow"
 

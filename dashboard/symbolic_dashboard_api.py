@@ -48,15 +48,13 @@ def _audit_deprecated_import() -> None:
         from common.audit_chain import append_event as _append_event  # type: ignore
 
         _append_event(
-            {
-                "actor": "system",
-                "action": "deprecated_import",
-                "context": {
-                    "module": "dashboard.symbolic_dashboard_api",
-                    "shim_mode": _SHIM_MODE,
-                },
-                "payload_digest": "dashboard.symbolic_dashboard_api",
-            }
+            actor="system",
+            action="deprecated_import",
+            ctx={
+                "module": "dashboard.symbolic_dashboard_api",
+                "shim_mode": _SHIM_MODE,
+            },
+            payload={"module": "dashboard.symbolic_dashboard_api"},
         )
     except Exception as e:
         _log.debug("symbolic_dashboard_api shim audit skipped: %s", e)
@@ -77,8 +75,7 @@ except Exception as e:
         f"Root cause: {e!r}"
     ) from e
 
-__all__ = [name for name in dir(_backend) if not name.startswith("_")]
-for _name in __all__:
+for _name in (n for n in dir(_backend) if not n.startswith("_")):
     globals()[_name] = getattr(_backend, _name)
 
 # Breadcrumb for introspection
@@ -88,14 +85,4 @@ __canonical__ = _CANON_PATH
 del (
     _imp,
     _backend,
-    _name,
-    _os,
-    _warnings,
-    _logging,
-    _log,
-    _MSG,
-    _SHIM_MODE,
-    _CANON_PATH,
-    _audit_deprecated_import,
-    _emit_warning_once,
 )

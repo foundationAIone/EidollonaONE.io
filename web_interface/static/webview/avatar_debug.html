@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+        #canvas { width: 100%; height: 400px; border: 2px solid #d4af37; }
+        #status { margin: 10px 0; padding: 10px; background: #2a2a4e; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #d4af37; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🎭 Avatar Loading Debug Test</h1>
+    <div id="status">Ready to test...</div>
+    <button onclick="testBasicThreeJS()">Test Three.js</button>
+    <button onclick="testGLBAccess()">Test GLB Access</button>
+    <button onclick="testFullAvatar()">Test Full Avatar</button>
+    <canvas id="canvas"></canvas>
+
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const status = document.getElementById('status');
+        
+        function updateStatus(msg) {
+            status.textContent = msg;
+            console.log(msg);
+        }
+        
+        function testBasicThreeJS() {
+            updateStatus("Testing basic Three.js setup...");
+            
+            try {
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                renderer.setClearColor(0x1a1a2e);
+                
+                // Add a spinning cube
+                const geometry = new THREE.BoxGeometry();
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                const cube = new THREE.Mesh(geometry, material);
+                scene.add(cube);
+                
+                camera.position.z = 5;
+                
+                function animate() {
+                    requestAnimationFrame(animate);
+                    cube.rotation.x += 0.01;
+                    cube.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                }
+                animate();
+                
+                updateStatus("✅ Three.js working! You should see a green spinning cube.");
+            } catch (error) {
+                updateStatus(`❌ Three.js error: ${error.message}`);
+            }
+        }
+        
+        async function testGLBAccess() {
+            updateStatus("Testing GLB file access...");
+            
+            try {
+                const response = await fetch('/webview/assets/models/eidollona.glb', { method: 'HEAD' });
+                if (response.ok) {
+                    updateStatus(`✅ GLB file accessible (${response.status})`);
+                } else {
+                    updateStatus(`❌ GLB file not accessible (${response.status})`);
+                }
+            } catch (error) {
+                updateStatus(`❌ GLB access error: ${error.message}`);
+            }
+        }
+        
+        async function testFullAvatar() {
+            updateStatus("Testing full avatar loading...");
+            
+            try {
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                renderer.setClearColor(0x1a1a2e);
+                
+                // Add lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                scene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
+                
+                camera.position.set(0, 0, 3);
+                
+                // Start render loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    renderer.render(scene, camera);
+                }
+                animate();
+                
+                // Load GLB
+                const loader = new THREE.GLTFLoader();
+                loader.load('/webview/assets/models/eidollona.glb', 
+                    (gltf) => {
+                        const avatar = gltf.scene;
+                        avatar.scale.set(1, 1, 1);
+                        avatar.position.set(0, -1, 0);
+                        scene.add(avatar);
+                        updateStatus("✅ Avatar loaded successfully!");
+                    },
+                    (progress) => {
+                        const percent = Math.round(progress.loaded / progress.total * 100);
+                        updateStatus(`📥 Loading avatar... ${percent}%`);
+                    },
+                    (error) => {
+                        updateStatus(`❌ Avatar load failed: ${error.message}`);
+                        console.error(error);
+                    }
+                );
+                
+            } catch (error) {
+                updateStatus(`❌ Full avatar test error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

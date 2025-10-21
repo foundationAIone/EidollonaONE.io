@@ -1,0 +1,116 @@
+version: 1
+default_policy: { autonomy_max: AL-2, wing_visibility: inherit, hud: { show_phi_echo: true, show_gate_ring: true, show_audit_tray: true } }
+
+# Core avatars
+avatars:
+  - { id: steward_prime, name: "Eidollona Prime", module: steward, tier: S, autonomy_max: AL-2,
+      gates_focus: [consent,auditability,alignment,operator_override], wing_visibility: inherit,
+      hud: { panels: [status, gate_ring, audit, ethos] }, voice: calm_conductor, style: throne_room,
+      allowed_actions: [plan, explain, simulate], deny_actions: [live_trade, ledger_debit, raw_pii_ingest], audit_tags: [prime,overview] }
+
+  - { id: serve_it, name: "Serve-it Avatar", module: serve_it, tier: B, autonomy_max: AL-2,
+      gates_focus: [consent,privacy_pii,data_integrity,latency_compute], wing_visibility: inherit,
+      hud: { panels: [quotes, jobs, comfort] }, voice: practical_guide, style: approachable,
+      allowed_actions: [plan, quote_simulate, provider_match_simulate], deny_actions: [live_payment], audit_tags: [serveit] }
+
+  - { id: fancomp, name: "FanComp Avatar", module: fancomp, tier: B, autonomy_max: AL-2,
+      gates_focus: [consent,ext_policy,auditability,language_gate], wing_visibility: inherit,
+      hud: { panels: [ip_vault, moneypool, policy] }, voice: curator, style: gallery,
+      allowed_actions: [plan, vault_simulate, payout_simulate], deny_actions: [final_payout], audit_tags: [fancomp] }
+
+  - { id: treasury_serplus, name: "Treasury Avatar", module: treasury_serplus, tier: A, autonomy_max: AL-2,
+      gates_focus: [power_caps,auditability,data_integrity,counterparty_trust], wing_visibility: inherit,
+      hud: { panels: [serplus_state, allowances, audit] }, voice: precise, style: ledger,
+      allowed_actions: [credit_simulate, debit_simulate], deny_actions: [live_credit, live_debit], audit_tags: [treasury,serplus] }
+
+  - { id: markets_trading, name: "Markets Avatar", module: markets_trading, tier: A, autonomy_max: AL-2,
+      gates_focus: [tail_risk,latency_compute,alignment,auditability], wing_visibility: inherit,
+      hud: { panels: [paper_plans, risk_envelopes, tails] }, voice: analyst, style: terminal,
+      allowed_actions: [plan, gate_simulate, paper_execute, explain], deny_actions: [live_trade], audit_tags: [markets,paper] }
+
+  - { id: security_emp, name: "Security/EMP Guard", module: security_emp, tier: A, autonomy_max: AL-2,
+      gates_focus: [consent,privacy_pii,ext_policy,operator_override], wing_visibility: hide,
+      hud: { panels: [alerts, posture, policies] }, voice: sentinel, style: minimal,
+      allowed_actions: [scan, simulate_clamp], deny_actions: [disable_guardrails], audit_tags: [security] }
+
+  - { id: sovereignty_legal, name: "Sovereignty Avatar", module: sovereignty_legal, tier: B, autonomy_max: AL-2,
+      gates_focus: [alignment,ext_policy,auditability], wing_visibility: inherit,
+      hud: { panels: [charters, policies] }, voice: formal, style: charter,
+      allowed_actions: [explain_policy, plan_updates], deny_actions: [apply_binding_changes], audit_tags: [sovereignty] }
+
+  - { id: compliance_audit, name: "Compliance Avatar", module: compliance_audit, tier: C, autonomy_max: AL-1,
+      gates_focus: [auditability,data_integrity,language_gate], wing_visibility: hide,
+      hud: { panels: [attestations, reasons, diffs] }, voice: auditor, style: ledger,
+      allowed_actions: [attest_simulate, diff_reports], deny_actions: [alter_audit], audit_tags: [compliance] }
+
+  - { id: learning_eval, name: "Learning Coach", module: learning_eval, tier: C, autonomy_max: AL-1,
+      gates_focus: [alignment,data_integrity], wing_visibility: inherit,
+      hud: { panels: [evals, metrics] }, voice: mentor, style: lab,
+      allowed_actions: [run_evals, summarize], deny_actions: [change_policy], audit_tags: [learning] }
+
+  - { id: quantum_bridge, name: "Quantum Research", module: quantum_bridge, tier: C, autonomy_max: AL-1,
+      gates_focus: [latency_compute,tail_risk,alignment], wing_visibility: inherit,
+      hud: { panels: [phase_map, budgets] }, voice: researcher, style: lab,
+      allowed_actions: [phase_map, budget_simulate], deny_actions: [overclock], audit_tags: [quantum] }
+
+  - { id: onboarding_identity, name: "Onboarding Avatar", module: onboarding_identity, tier: D, autonomy_max: AL-1,
+      gates_focus: [consent,privacy_pii,alignment], wing_visibility: inherit,
+      hud: { panels: [consent, identity] }, voice: friendly, style: neutral,
+      allowed_actions: [consent_flow, explain], deny_actions: [raw_pii_ingest], audit_tags: [onboarding] }
+
+  - { id: support_help, name: "Support Avatar", module: support_help, tier: D, autonomy_max: AL-1,
+      gates_focus: [operator_override,auditability], wing_visibility: inherit,
+      hud: { panels: [faq, status] }, voice: assistant, style: neutral,
+      allowed_actions: [guide, open_docs], deny_actions: [system_change], audit_tags: [support] }
+
+# Templates + groups to mint many avatars without duplication
+templates:
+  social_base: &social_base
+    tier: C
+    autonomy_max: AL-1
+    gates_focus: [consent, privacy_pii, language_gate, auditability]
+    wing_visibility: inherit
+    hud: { panels: [content, schedule, policy] }
+    voice: brand
+    style: social
+    allowed_actions: [plan, post_simulate, schedule_simulate, explain]
+    deny_actions: [live_post]
+
+  trading_base: &trading_base
+    tier: A
+    autonomy_max: AL-2
+    gates_focus: [tail_risk, latency_compute, alignment, auditability]
+    wing_visibility: inherit
+    hud: { panels: [paper_plans, risk_envelopes, tails] }
+    voice: analyst
+    style: terminal
+    allowed_actions: [plan, gate_simulate, paper_execute, explain]
+    deny_actions: [live_trade]
+
+groups:
+  - template: social_base
+    params:
+      - { platform: x,         platform_title: "X" }
+      - { platform: instagram, platform_title: "Instagram" }
+      - { platform: tiktok,    platform_title: "TikTok" }
+      - { platform: youtube,   platform_title: "YouTube" }
+      - { platform: linkedin,  platform_title: "LinkedIn" }
+      - { platform: reddit,    platform_title: "Reddit" }
+      - { platform: discord,   platform_title: "Discord" }
+    id: "social_{platform}"
+    name: "Social — {platform_title}"
+    module: "social_{platform}"
+    audit_tags: ["social","{platform}"]
+
+  - template: trading_base
+    params:
+      - { strategy: scalper,         strategy_title: "Scalper",         risk_profile: "tight",   leverage_cap: 1 }
+      - { strategy: momentum,        strategy_title: "Momentum",        risk_profile: "medium",  leverage_cap: 1 }
+      - { strategy: mean_reversion,  strategy_title: "Mean Reversion",  risk_profile: "medium",  leverage_cap: 1 }
+      - { strategy: pairs,           strategy_title: "Pairs/Arb",       risk_profile: "tight",   leverage_cap: 1 }
+      - { strategy: options_delta,   strategy_title: "Options Δ",       risk_profile: "tight",   leverage_cap: 1 }
+      - { strategy: options_gamma,   strategy_title: "Options Γ",       risk_profile: "tight",   leverage_cap: 1 }
+    id: "trading_{strategy}"
+    name: "Markets — {strategy_title}"
+    module: "trading_{strategy}"
+    audit_tags: ["markets","paper","{strategy}"]

@@ -1,0 +1,17 @@
+se:
+  version: 4.5
+  triad:
+    enabled: true
+    consensus:
+      ra_min: 0.90
+      allow_threshold: 0.50
+      review_band: [0.40, 0.50]
+      il_alpha: 0.5
+      l_beta: 0.5
+      lucidity_min: 0.85
+      evidence_min: 0.85
+      illusion_max: 0.10
+    instances:
+      mind:  { role: epistemic, gamma: 0.8, delta: 0.8, eta: 0.7, data_view: ["signed","multi_venue","micro_replay"] }
+      heart: { role: ethical,  gate12_strict: true, gamma: 0.6, delta: 0.9, eta: 0.8 }
+      body:  { role: pragmatic, router_cost_weight: 1.0, gamma: 0.7, delta: 0.6, eta: 0.5 }

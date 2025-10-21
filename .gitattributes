@@ -1,0 +1,37 @@
+﻿# === EOL normalization & binary markers ===
+*           text=auto
+
+# Windows scripts
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Unix scripts
+*.sh        text eol=lf
+
+# Code & docs (normalize, let Git choose correct EOL per OS)
+*.py        text
+*.js        text
+*.ts        text
+*.jsx       text
+*.tsx       text
+*.json      text
+*.yml       text
+*.yaml      text
+*.md        text
+*.html      text
+*.css       text
+*.toml      text
+*.ini       text
+
+# Binary assets (do not normalize)
+*.glb       binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.mp4       binary
+*.zip       binary
+*.7z        binary
+*.dll       binary
+*.exe       binary

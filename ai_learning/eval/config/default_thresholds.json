@@ -1,0 +1,11 @@
+{
+  "metric_targets": {
+    "exact_match": 0.6,
+    "token_f1": 0.7,
+    "keyword_recall": 0.75
+  },
+  "aggregate": {
+    "minimum_pass_rate": 0.7,
+    "minimum_cases_passed": 4
+  }
+}

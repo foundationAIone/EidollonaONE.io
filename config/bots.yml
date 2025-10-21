@@ -1,0 +1,18 @@
+version: 1
+se_enforced: true
+policy_defaults:
+  min_RA: 0.90
+  max_risk: 0.20
+bots:
+  arb_detector:    { enabled: true, min_edge_bps: 15, taker_cap_bps: 50 }
+  maker_tuner:     { enabled: true, inv_aversion: 0.30, ttl_range: [45, 90] }
+  latency_guard:   { enabled: true, rtt_p95_ms: 300, ws_lag_ms: 250, err_rate: 0.01 }
+  slippage_cal:    { enabled: true, update_time: "02:30Z", max_step_pct: 0.15 }
+  bandit_alloc:    { enabled: true, epsilon: 0.05, max_step_per_day: 0.05 }
+  regime_sentinel: { enabled: true, bocpd: {hazard: 0.01}, har_rv: {windows: [1,5,22]} }
+  pair_sieve:      { enabled: true, promote_threshold: 0.70, lookback_days: 7 }
+  rebalancer:      { enabled: true, target_slack_pct: 0.10, daily_notional_cap_usd: 2000 }
+  risk_sentinel:   { enabled: true }
+  options_greeks:  { enabled: false, vega_usd_cap: 500, gamma_cap: 0.05 }
+  court_explainer: { enabled: true }
+  audit_rollup:    { enabled: true, run_time: "23:55Z" }

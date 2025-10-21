@@ -12,7 +12,11 @@ from typing import Any, Dict, Optional
 
 # SE41 (v4.1+) integration
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from trading.helpers.se41_trading_gate import se41_signals, ethos_decision, se41_numeric
+from trading.helpers.se41_trading_gate import (
+    se41_signals,
+    se41_numeric,
+    ethos_decision_envelope,
+)
 
 """
 🟢 EidollonaONE Trade Awaken v4.1+
@@ -129,10 +133,11 @@ class TradeAwakener:
         self.workdir.mkdir(exist_ok=True)
 
         # subsystems (optional)
-        self.exec: Optional[AITradeExecutor] = None
-        self.oms: Optional[OrderManagementSystem] = None
-        self.comp: Optional[ComplianceAuditor] = None
-        self.pm: Optional[AutonomousPortfolioManager] = None
+        # Keep attributes un-annotated here to avoid analyzer issues with guarded imports
+        self.exec = None  # type: Any
+        self.oms = None  # type: Any
+        self.comp = None  # type: Any
+        self.pm = None  # type: Any
 
         # symbolic engine
         self._se41 = SymbolicEquation41()
@@ -277,8 +282,9 @@ class TradeAwakener:
                 },
                 "explain": "trade_awaken.health",
             }
-        )
-        self.state.ethos = ethos_decision(sig)
+        ) or {}
+        # Use dict-returning envelope for consistent typing
+        self.state.ethos = ethos_decision_envelope(sig)
         self.state.notes["health"] = {
             "liquidity": liquidity,
             "breadth": breadth,
@@ -298,25 +304,26 @@ class TradeAwakener:
         # Executor
         if HAVE_EXECUTOR and not self.exec:
             try:
-                self.exec = create_ai_trade_executor()
+                # create_ai_trade_executor is only defined when HAVE_EXECUTOR is True
+                self.exec = create_ai_trade_executor()  # type: ignore[name-defined]
             except Exception as e:
                 self.log.warning(f"Executor warmup failed: {e}")
         # OMS
         if HAVE_OMS and not self.oms:
             try:
-                self.oms = create_order_management_system()
+                self.oms = create_order_management_system()  # type: ignore[name-defined]
             except Exception as e:
                 self.log.warning(f"OMS warmup failed: {e}")
         # Compliance
         if HAVE_COMP and not self.comp:
             try:
-                self.comp = create_compliance_auditor()
+                self.comp = create_compliance_auditor()  # type: ignore[name-defined]
             except Exception as e:
                 self.log.warning(f"Compliance warmup failed: {e}")
         # Portfolio manager
         if HAVE_PM and not self.pm:
             try:
-                self.pm = create_portfolio_manager()
+                self.pm = create_portfolio_manager()  # type: ignore[name-defined]
             except Exception as e:
                 self.log.warning(f"Portfolio warmup failed: {e}")
 

@@ -332,7 +332,11 @@ async def reveal_resolve(body: RevealResolveBody):
 @router.get("/reveal/list")
 async def reveal_list():
     # Minimal: return approvals snapshot
-    return {"approvals": [a.__dict__ for a in reveal.gate.approvals]}
+    try:
+        status = reveal.gate.status()
+        return {"approvals": status.get("approvals", [])}
+    except Exception:
+        return {"approvals": []}
 
 
 # -------- perf and guardian metrics --------
@@ -561,8 +565,8 @@ async def build_approve(body: BuildApproveBody):
     _SELF_METRICS["approved"] = _SELF_METRICS.get("approved", 0) + 1
     # If SAFE is off, attempt to apply patch in staging and re-run tests
     if not SETTINGS.SAFE_MODE:
+        repo = REPO_ROOT
         try:
-            repo = REPO_ROOT
             # Ensure git repository
             subprocess.check_call(
                 ["git", "rev-parse", "--is-inside-work-tree"], cwd=repo

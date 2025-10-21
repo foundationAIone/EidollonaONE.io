@@ -4,7 +4,7 @@ Signal-focused bot producing momentum & volatility aligned score for crypto bask
 
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, Optional, Tuple, List
+from typing import Any, Dict, Optional, Tuple, List, cast
 import time
 import random
 import logging
@@ -13,22 +13,33 @@ import math
 
 try:  # pragma: no cover
     from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
-    from trading.helpers.se41_trading_gate import se41_signals, ethos_decision, se41_numeric  # type: ignore
+    # Prefer modern context builder to avoid legacy shim warnings
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
+    from trading.helpers.se41_trading_gate import (
+        se41_signals,
+        ethos_decision_envelope,
+        se41_numeric,
+    )  # type: ignore
 except Exception:  # pragma: no cover
     SymbolicEquation41 = object  # type: ignore
 
-    def assemble_se41_context():
-        return {"now": time.time()}
+    def assemble_se41_context(**kwargs):
+        d = {"now": time.time()}
+        d.update(kwargs)
+        return d
 
-    def se41_signals(d):
+    def _fallback_se41_signals(*args, **kwargs):
+        d = args[0] if args and isinstance(args[0], dict) else {}
         return {"confidence": 0.5, "features": d}
+    se41_signals = cast(Any, _fallback_se41_signals)
 
-    def ethos_decision(tx):
-        return {"decision": "allow"}
+    def _fallback_ethos_decision_envelope(tx):
+        return {"decision": "allow", "reason": "fallback"}
+    ethos_decision_envelope = cast(Any, _fallback_ethos_decision_envelope)
 
-    def se41_numeric(**_):
+    def _fallback_se41_numeric(M_t=None, DNA_states=None, harmonic_patterns=None):
         return 0.5
+    se41_numeric = cast(Any, _fallback_se41_numeric)
 
 
 log = logging.getLogger(__name__)
@@ -60,7 +71,12 @@ class CryptoBot:
         if self.cfg.seed is not None:
             random.seed(self.cfg.seed)
         self.state = BotState()
-        self.ctx = assemble_se41_context()
+        # Initialize a canonical SE41 context using the modern builder
+        self.ctx = assemble_se41_context(
+            coherence_hint=0.75,
+            risk_hint=0.3,
+            uncertainty_hint=0.3,
+        )
         self.eq = SymbolicEquation41()
 
     def observe(self) -> Dict[str, Any]:
@@ -71,12 +87,22 @@ class CryptoBot:
         return {"returns": rets, "vol": vol, "momentum": momentum, "ts": time.time()}
 
     def decide(self, obs: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
-        feats = se41_signals(obs)
+        # Tolerate se41_signals implementations that accept 0 or arbitrary args
+        _sig = se41_signals  # type: ignore[assignment]
+        try:
+            feats = _sig(obs) or {}
+        except Exception:
+            try:
+                feats = _sig() or {}
+            except Exception:
+                feats = {}
         vol = obs["vol"]
         mom = obs["momentum"]
         stability = 1.0 - min(1.0, vol / 0.05)
         directional = (mom + 0.02) / 0.04  # map ~[-0.02,0.02] -> [0,1]
         directional = max(0.0, min(1.0, directional))
+        if not isinstance(feats, dict):
+            feats = {}
         dna = [stability, directional, feats.get("confidence", 0.5), 1.0, 1.05]
         score_raw = se41_numeric(
             M_t=directional, DNA_states=dna, harmonic_patterns=dna[::-1]
@@ -92,7 +118,9 @@ class CryptoBot:
         if score < self.cfg.risk_threshold:
             self.state.held += 1
             return "hold"
-        dec = ethos_decision({"scope": self.cfg.name, "score": score, "meta": meta})
+        dec = ethos_decision_envelope(
+            {"scope": self.cfg.name, "score": score, "meta": meta}
+        )
         if isinstance(dec, dict) and dec.get("decision") == "deny":
             self.state.denied += 1
             return "deny"

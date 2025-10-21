@@ -23,7 +23,7 @@ from typing import Dict, Optional, List, Tuple, Any
 
 # v4.1 (kept for optional local evaluation fallback)
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from symbolic_core.se41_context import assemble_se41_context
+from symbolic_core.context_builder import assemble_se41_context
 
 # Shared, centralized SE41 trading helpers
 from trading.helpers.se41_trading_gate import se41_signals, ethos_decision

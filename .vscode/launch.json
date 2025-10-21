@@ -16,6 +16,28 @@
             "program": "${workspaceFolder}/internet_access/self_update/auto_refactor.py",
             "console": "integratedTerminal",
             "python": "E:\\EidollonaONE\\eidollona_env\\Scripts\\python.exe"
+        },
+        {
+            "name": "Python: avatar_assets_scan.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/avatar_assets_scan.py",
+            "args": [
+                "--repo",
+                "${workspaceFolder}",
+                "--top",
+                "12"
+            ],
+            "console": "integratedTerminal",
+            "python": "${config:python.defaultInterpreterPath}"
+        },
+        {
+            "name": "Python: avatar_preview_server.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/avatar_preview_server.py",
+            "console": "integratedTerminal",
+            "python": "${config:python.defaultInterpreterPath}"
         }
     ]
 }

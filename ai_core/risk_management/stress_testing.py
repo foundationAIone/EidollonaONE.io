@@ -104,7 +104,7 @@ class StressTester:
         avg = sum(losses) / len(losses)
         mean = avg
         dispersion = (
-            math.sqrt(sum((l - mean) ** 2 for l in losses) / len(losses))
+            math.sqrt(sum((loss_val - mean) ** 2 for loss_val in losses) / len(losses))
             / (mean + 1e-9)
             if mean > 0
             else 0.0

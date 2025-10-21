@@ -23,19 +23,12 @@ from .compliance_engine import ComplianceEngine
 
 try:  # pragma: no cover
     from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
 except Exception:  # pragma: no cover
+    from .value_at_risk import SymbolicEquation41  # type: ignore
 
-    class SymbolicEquation41:  # type: ignore
-        def evaluate(self, ctx):
-            class S:
-                pass
-
-            s = S()
-            s.risk = ctx.get("risk_hint", 0.4)
-            s.uncertainty = ctx.get("uncertainty_hint", 0.4)
-            s.coherence = ctx.get("coherence_hint", 0.6)
-            return s
+try:  # pragma: no cover
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
+except Exception:  # pragma: no cover
 
     def assemble_se41_context(**kw):
         return kw
@@ -46,7 +39,7 @@ def _clamp01(x: float) -> float:
 
 
 class RiskAnalyzer:
-    def __init__(self, symbolic: Optional[SymbolicEquation41] = None) -> None:
+    def __init__(self, symbolic: Optional[Any] = None) -> None:
         self.var_engine = VaREngine(symbolic=symbolic)
         self.tail_engine = TailRiskEngine(symbolic=symbolic)
         self.stress_tester = StressTester(symbolic=symbolic)

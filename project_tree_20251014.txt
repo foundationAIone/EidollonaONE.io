@@ -1,0 +1,484 @@
+EidollonaONE
+├── .github
+│   └── workflows
+├── .ruff_cache
+│   └── 0.4.4
+├── .vscode
+├── ai_core
+│   ├── asset_rebalancing
+│   ├── asset_tokenization
+│   ├── backtesting
+│   ├── black_scholes
+│   ├── blockchain
+│   ├── bots
+│   │   ├── autobots
+│   │   │   └── sectors
+│   │   ├── social_bots
+│   │   └── trading
+│   │       └── bot
+│   ├── common
+│   ├── currency
+│   ├── hft
+│   ├── market_analysis
+│   ├── probabilistic_quantum_rendering
+│   ├── quantum_core
+│   │   ├── qiskit_compat
+│   │   │   └── qiskit
+│   │   │       └── algorithms
+│   │   ├── quantum_logic
+│   │   ├── quantum_probability_assimilation
+│   │   └── quantum_processing
+│   ├── quantum_probablistic_infomation_rendering_system
+│   ├── risk_management
+│   ├── rl_trading
+│   ├── sensing
+│   ├── serplus
+│   ├── social_bots
+│   ├── strategy_optimization
+│   ├── surplus
+│   ├── symbolic_llms
+│   ├── trading
+│   │   ├── bots
+│   │   └── strategies
+│   └── trading_bots
+├── ai_learning
+│   └── eval
+│       ├── config
+│       │   └── outputs
+│       │       └── ai_learning_eval
+│       └── data
+├── autonomous_governance
+├── avatar
+│   ├── docs
+│   ├── embodiment
+│   ├── interface
+│   ├── rpm_ecosystem
+│   │   ├── ai_interaction
+│   │   ├── ai_system
+│   │   ├── animation_system
+│   │   ├── avatar_generation
+│   │   ├── dimensional_systems
+│   │   ├── environment_design
+│   │   ├── learning_enhancement
+│   │   ├── platform_integrations
+│   │   │   ├── mobile
+│   │   │   ├── unity
+│   │   │   ├── unreal
+│   │   │   └── webxr
+│   │   ├── rendering
+│   │   ├── utilities
+│   │   └── vr_ar_integration
+│   └── tests
+├── avatar_data
+├── avatars
+│   ├── fancomp
+│   ├── orchestrator
+│   ├── serveit
+│   └── trader
+├── awakening_sequence
+│   └── assets
+│       ├── avatar_textures
+│       └── throne_textures
+├── backups
+│   └── 2025-09-18_pre_revert
+│       ├── ai_core
+│       │   └── backtesting
+│       ├── avatar
+│       │   └── embodiment
+│       ├── common
+│       ├── connection
+│       ├── consciousness_broadcast
+│       ├── scripts
+│       ├── sovereignty
+│       ├── sovereignty_core
+│       ├── symbolic_core
+│       └── tests
+├── black_scholes
+│   └── api
+├── blockchain
+├── bridge
+├── cluster
+│   ├── drivers
+│   └── logs
+├── cognition
+├── common
+├── compliance_auditor_data
+├── connection
+├── connection_data
+├── consciousness
+├── consciousness_broadcast
+│   └── logs
+├── consciousness_core
+├── consciousness_data
+├── consciousness_engine
+│   └── self_awareness
+├── dashboard
+├── docs
+│   ├── avatars
+│   ├── fancomp
+│   └── serveit
+├── eidollona_optimizer
+├── emp
+│   ├── api
+│   ├── drones
+│   ├── nanobots
+│   └── tests
+├── emp_guard
+│   └── api
+├── encryption_data
+├── enforcement_data
+├── fancompfoundation
+├── finance
+│   ├── ledger
+│   └── policy
+├── generated_modules
+├── generated_modules_backup
+├── gfs
+│   └── tests
+├── governance_data
+├── identity_data
+├── internet_access
+│   ├── api
+│   ├── generated_modules
+│   ├── generated_modules_backup
+│   ├── self_update
+│   │   ├── generated_modules
+│   │   ├── generated_modules_backup
+│   │   ├── update_backups
+│   │   └── upgrade_logs
+│   ├── system_backups
+│   ├── terminal_assimilation
+│   └── upgrade_logs
+├── ip_vault
+├── jurisdiction_data
+├── legal_framework
+├── logs
+│   └── promo
+├── market_analysis
+│   └── regime
+│       └── api
+├── master_key
+├── network_diagnostics
+├── nodes
+│   └── api
+├── observability
+├── opentelemetry
+│   ├── exporter
+│   │   └── otlp
+│   │       └── proto
+│   │           └── http
+│   ├── instrumentation
+│   │   └── fastapi
+│   ├── sdk
+│   │   └── trace
+│   │       └── export
+│   └── trace
+├── order_management_data
+├── outputs
+│   └── avatars
+├── portfolio_manager_data
+├── pqre
+│   └── api
+├── reality_manipulation
+├── resonance
+│   └── api
+├── rpm_ecosystem
+├── scripts
+├── security
+│   ├── api
+│   └── tests
+├── self_build
+│   └── patches
+├── self_jurisdiction
+├── sensing
+├── serplus
+│   ├── api
+│   ├── compcoin
+│   ├── ledger
+│   └── nft
+├── serve_it_app
+├── settings
+├── social
+│   └── telegram
+├── sovereignty
+│   └── api
+├── sovereignty_core
+├── sovereignty_data
+├── stewardship
+│   └── api
+├── symbolic_core
+├── symbolic_io
+├── symbolic_io_interface
+├── symbolic_legislation
+├── system_backups
+├── tests
+│   ├── ai_learning
+│   └── smoke
+├── tools
+│   └── cache
+├── trade_awaken_data
+├── trade_executor_data
+├── trading
+│   ├── api
+│   └── helpers
+├── trading_engine
+│   ├── common
+│   ├── config
+│   ├── execution
+│   ├── hedging
+│   ├── options
+│   │   └── api
+│   └── risk
+├── typings
+│   └── ai_core
+│       └── trading
+├── update_backups
+├── upgrade_logs
+├── utils
+├── venv_management
+│   └── envs
+├── web_interface
+│   ├── backend
+│   ├── frontend
+│   │   ├── public
+│   │   └── scenes
+│   ├── static
+│   │   └── webview
+│   │       ├── assets
+│   │       │   └── avatars
+│   │       ├── avatars
+│   │       │   └── js
+│   │       └── js
+│   └── vendor
+│       ├── jsm
+│       │   ├── loaders
+│       │   └── utils
+│       ├── three_legacy
+│       │   ├── controls
+│       │   ├── loaders
+│       │   │   └── utils
+│       │   └── utils
+│       └── three_legacy150
+│           ├── controls
+│           ├── loaders
+│           └── utils
+├── web_planning
+│   ├── backend
+│   │   ├── avatar
+│   │   ├── avatar_api
+│   │   ├── config
+│   │   ├── dashboard
+│   │   ├── guardian
+│   │   ├── reveal
+│   │   ├── self_build
+│   │   │   ├── artifacts
+│   │   │   └── patches
+│   │   ├── simulators
+│   │   ├── state
+│   │   │   ├── audit
+│   │   │   ├── audit_test
+│   │   │   ├── audit_test_diag
+│   │   │   ├── avatar
+│   │   │   │   └── artifacts
+│   │   │   ├── dashboard
+│   │   │   │   └── dashboard_patches
+│   │   │   ├── guardian_audit
+│   │   │   ├── internet
+│   │   │   │   └── cache
+│   │   │   ├── memory
+│   │   │   └── reveal
+│   │   ├── static
+│   │   │   └── webview
+│   │   │       └── vendor
+│   │   │           └── jsm
+│   │   │               ├── controls
+│   │   │               └── loaders
+│   │   ├── symbolic
+│   │   └── tests
+│   └── frontend
+│       ├── dist
+│       │   └── assets
+│       └── node_modules
+│           ├── @esbuild
+│           │   └── win32-x64
+│           ├── @monogrid
+│           │   └── gainmap-js
+│           │       ├── dist
+│           │       │   ├── core
+│           │       │   ├── decode
+│           │       │   │   ├── errors
+│           │       │   │   ├── loaders
+│           │       │   │   ├── materials
+│           │       │   │   └── utils
+│           │       │   ├── encode
+│           │       │   │   └── materials
+│           │       │   └── libultrahdr
+│           │       └── libultrahdr-wasm
+│           │           └── build
+│           ├── @react-spring
+│           │   ├── animated
+│           │   │   └── dist
+│           │   │       └── cjs
+│           │   ├── core
+│           │   │   └── dist
+│           │   │       └── cjs
+│           │   ├── rafz
+│           │   │   └── dist
+│           │   │       └── cjs
+│           │   ├── shared
+│           │   │   └── dist
+│           │   │       └── cjs
+│           │   ├── three
+│           │   │   └── dist
+│           │   │       └── cjs
+│           │   └── types
+│           │       └── dist
+│           │           └── cjs
+│           ├── @react-three
+│           │   └── fiber
+│           │       ├── dist
+│           │       │   └── declarations
+│           │       │       └── src
+│           │       │           ├── core
+│           │       │           ├── native
+│           │       │           └── web
+│           │       └── native
+│           │           └── dist
+│           ├── @tweenjs
+│           │   └── tween.js
+│           │       └── dist
+│           ├── @types
+│           │   └── three
+│           │       └── build
+│           ├── @use-gesture
+│           │   ├── core
+│           │   │   ├── actions
+│           │   │   │   └── dist
+│           │   │   ├── dist
+│           │   │   │   └── declarations
+│           │   │   │       └── src
+│           │   │   │           ├── config
+│           │   │   │           ├── engines
+│           │   │   │           ├── types
+│           │   │   │           └── utils
+│           │   │   ├── types
+│           │   │   │   └── dist
+│           │   │   └── utils
+│           │   │       └── dist
+│           │   └── react
+│           │       └── dist
+│           │           └── declarations
+│           │               └── src
+│           ├── @webgpu
+│           │   └── types
+│           │       └── dist
+│           ├── bidi-js
+│           │   └── dist
+│           ├── camera-controls
+│           │   └── dist
+│           │       └── utils
+│           ├── detect-gpu
+│           │   └── dist
+│           │       ├── benchmarks
+│           │       ├── example
+│           │       ├── rollup
+│           │       └── src
+│           │           └── internal
+│           ├── hls.js
+│           │   └── dist
+│           ├── immediate
+│           │   └── dist
+│           ├── its-fine
+│           │   └── dist
+│           ├── lie
+│           │   └── dist
+│           ├── maath
+│           │   ├── buffer
+│           │   │   └── dist
+│           │   ├── dist
+│           │   │   └── declarations
+│           │   │       └── src
+│           │   │           └── random
+│           │   ├── easing
+│           │   │   └── dist
+│           │   ├── geometry
+│           │   │   └── dist
+│           │   ├── matrix
+│           │   │   └── dist
+│           │   ├── misc
+│           │   │   └── dist
+│           │   ├── random
+│           │   │   └── dist
+│           │   ├── three
+│           │   │   └── dist
+│           │   ├── triangle
+│           │   │   └── dist
+│           │   ├── vector2
+│           │   │   └── dist
+│           │   └── vector3
+│           │       └── dist
+│           ├── meshline
+│           │   └── dist
+│           ├── promise-worker-transferable
+│           │   └── dist
+│           ├── react-composer
+│           │   └── dist
+│           ├── react-use-measure
+│           │   └── dist
+│           ├── rollup
+│           │   └── dist
+│           │       ├── bin
+│           │       ├── es
+│           │       │   └── shared
+│           │       └── shared
+│           ├── stats-gl
+│           │   ├── dist
+│           │   └── node_modules
+│           │       └── three
+│           │           └── build
+│           ├── stats.js
+│           │   └── build
+│           ├── three
+│           │   └── build
+│           ├── three-mesh-bvh
+│           │   ├── build
+│           │   └── src
+│           │       └── core
+│           │           └── build
+│           ├── troika-three-text
+│           │   └── dist
+│           ├── troika-three-utils
+│           │   └── dist
+│           ├── troika-worker-utils
+│           │   └── dist
+│           ├── tunnel-rat
+│           │   └── dist
+│           ├── utility-types
+│           │   └── dist
+│           ├── vite
+│           │   └── dist
+│           │       ├── client
+│           │       ├── node
+│           │       │   └── chunks
+│           │       └── node-cjs
+│           ├── webgl-constants
+│           │   └── dist
+│           │       ├── lib
+│           │       └── types
+│           └── webgl-sdf-generator
+│               └── dist
+└── webview
+    └── vendor
+        ├── jsm
+        │   ├── loaders
+        │   └── utils
+        ├── three_legacy
+        │   ├── controls
+        │   ├── loaders
+        │   │   └── utils
+        │   └── utils
+        ├── three_legacy150
+        │   ├── controls
+        │   ├── loaders
+        │   └── utils
+        └── utils

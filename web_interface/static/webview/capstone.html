@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CAPSTONE — Eidollona Live</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: linear-gradient(180deg, #0d162c 0%, #101b36 100%);
+        color: #f4f7ff;
+      }
+      .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 28px;
+  background: rgba(12, 22, 48, 0.85);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(92, 126, 208, 0.2);
+      }
+      .top-bar h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .status-strip {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(123, 168, 255, 0.35);
+      }
+      .badge.good {
+        background: rgba(43, 190, 120, 0.15);
+        border-color: rgba(43, 190, 120, 0.45);
+      }
+      .badge.warn {
+        background: rgba(247, 187, 75, 0.15);
+        border-color: rgba(247, 187, 75, 0.45);
+      }
+      .badge.danger {
+        background: rgba(244, 92, 117, 0.15);
+        border-color: rgba(244, 92, 117, 0.45);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        padding: 28px;
+      }
+      @media (min-width: 1100px) {
+        main {
+          grid-template-columns: 420px 1fr;
+        }
+      }
+      .panel {
+        background: rgba(12, 21, 42, 0.92);
+        border-radius: 16px;
+        border: 1px solid rgba(98, 135, 210, 0.2);
+        box-shadow: 0 20px 40px rgba(4, 8, 22, 0.35);
+        padding: 24px;
+      }
+      .panel h2 {
+        margin: 0 0 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 16px;
+        color: #9fb7ff;
+      }
+      .stepper button,
+      .action-button,
+      .toggle-button {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(153, 178, 235, 0.35);
+        background: linear-gradient(180deg, rgba(42, 86, 170, 0.9) 0%, rgba(28, 58, 115, 0.9) 100%);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        transition: all 0.2s ease;
+      }
+      .stepper button[disabled],
+      .action-button[disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .stepper button + button {
+        margin-top: 12px;
+      }
+      .log-area {
+        margin-top: 18px;
+        background: rgba(6, 12, 31, 0.9);
+        border-radius: 12px;
+        border: 1px solid rgba(92, 126, 208, 0.25);
+        padding: 16px;
+        max-height: 320px;
+        overflow-y: auto;
+        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .right-grid {
+        display: grid;
+        gap: 18px;
+      }
+      @media (min-width: 860px) {
+        .right-grid.two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .card {
+        background: rgba(8, 15, 32, 0.92);
+        border-radius: 14px;
+        border: 1px solid rgba(98, 135, 210, 0.22);
+        padding: 18px;
+      }
+      .card h3 {
+        margin: 0 0 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 13px;
+        color: #88a7ff;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      label {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(169, 196, 255, 0.8);
+      }
+      input[type="text"],
+      select,
+      input[type="checkbox"] {
+        font-size: 14px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(139, 168, 230, 0.35);
+        background: rgba(14, 24, 50, 0.9);
+        color: #f4f7ff;
+      }
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #5aa3ff;
+      }
+      textarea {
+        width: 100%;
+        min-height: 90px;
+        resize: vertical;
+        border-radius: 10px;
+        border: 1px solid rgba(139, 168, 230, 0.35);
+        background: rgba(14, 24, 50, 0.9);
+        color: #f4f7ff;
+        padding: 10px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .row .toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .muted {
+        color: rgba(186, 204, 255, 0.65);
+        font-size: 12px;
+      }
+      .mt-12 {
+        margin-top: 12px;
+      }
+      .mt-18 {
+        margin-top: 18px;
+      }
+      .flex-basis-150 {
+        flex: 1 1 150px;
+      }
+      .danger-button {
+        background: linear-gradient(180deg, rgba(210, 57, 80, 0.95) 0%, rgba(140, 24, 43, 0.95) 100%);
+        border-color: rgba(244, 92, 117, 0.6);
+      }
+      .link {
+        color: #7cb6ff;
+        text-decoration: none;
+      }
+      .link:hover {
+        text-decoration: underline;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 10, 26, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 1000;
+      }
+      .modal {
+        background: rgba(10, 18, 38, 0.96);
+        border-radius: 16px;
+        border: 1px solid rgba(118, 150, 214, 0.35);
+        box-shadow: 0 24px 48px rgba(3, 6, 16, 0.55);
+        max-width: 420px;
+        width: 100%;
+        padding: 24px;
+      }
+      .modal h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #ffb769;
+      }
+      .modal p {
+        margin: 0 0 16px;
+        font-size: 14px;
+        color: rgba(204, 218, 255, 0.85);
+      }
+      .modal input[type="text"] {
+        width: 100%;
+        margin-bottom: 14px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .modal-error {
+        color: #ff8097;
+        font-size: 12px;
+        min-height: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>CAPSTONE — Eidollona Live</h1>
+        <div class="muted">Arm → Preflight → Engage • Token required</div>
+      </div>
+      <div class="status-strip">
+        <div id="badge-gate" class="badge warn">Gate: UNKNOWN</div>
+        <div id="badge-road" class="badge warn">Mode: SHOULDER</div>
+        <div id="badge-token" class="badge danger">Token: Missing</div>
+        <div id="badge-audit" class="badge warn">Audit: Pending</div>
+        <div id="badge-clock" class="badge">--:--:--</div>
+  <button id="btn-stop" class="danger-button action-button" type="button" aria-label="Emergency STOP (Alt+S)">Emergency STOP</button>
+      </div>
+    </header>
+    <main>
+      <section class="panel">
+        <h2>Capstone Sequence</h2>
+        <div class="stepper">
+          <button id="btn-arm" type="button" aria-label="Arm Capstone (Alt+A)">Arm</button>
+          <button id="btn-preflight" type="button" disabled aria-label="Run Preflight checks (Alt+P)">Run Preflight</button>
+          <button id="btn-engage" type="button" disabled aria-label="Engage sequence (Alt+E)">Engage</button>
+        </div>
+        <div class="field mt-18">
+          <label for="consent-input">Consent phrase</label>
+          <input id="consent-input" type="text" placeholder="Type ‘I consent’ to enable Engage" disabled />
+        </div>
+  <div class="log-area" id="cap-log" role="log" aria-live="polite" aria-label="Capstone event log"></div>
+      </section>
+      <section class="panel">
+        <div class="right-grid">
+          <div class="card">
+            <h3>Avatar presence</h3>
+            <div class="muted" id="avatar-status">VRM not loaded. <a class="link" href="throne_room.html" target="_blank" rel="noopener">Open Throne Room</a></div>
+            <div class="field mt-12">
+              <label for="vrm-url">VRM URL (optional)</label>
+              <input id="vrm-url" type="text" placeholder="https://.../avatar.vrm" />
+            </div>
+          </div>
+          <div class="card">
+            <h3>Internet allowlist</h3>
+            <div class="row">
+              <label class="toggle"><input id="internet-toggle" type="checkbox" aria-label="Toggle internet allowlist" /> Allowlist enabled</label>
+              <span id="allowlist-readonly" class="badge warn" role="status">Read-only</span>
+            </div>
+            <div class="field mt-12">
+              <label for="allowlist-json">Allowlist JSON</label>
+              <textarea id="allowlist-json" aria-label="Internet allowlist JSON" spellcheck="false" readonly></textarea>
+            </div>
+            <div class="row">
+              <button id="allowlist-save" type="button" class="action-button" disabled>Save allowlist</button>
+            </div>
+            <div class="muted mt-12">Review allowlist: <a class="link" href="../docs/internet_allowlist.html" target="_blank" rel="noopener">docs</a></div>
+            <div class="muted mt-12" id="allowlist-status">Read-only; set <code>read_only=false</code> in logs/allowlist.json to enable edits.</div>
+          </div>
+          <div class="card">
+            <h3>Worker controls</h3>
+            <div class="field">
+              <label for="trading-mode">Trading (paper by default)</label>
+              <select id="trading-mode" data-worker="trading">
+                <option value="stopped" selected>Stopped</option>
+                <option value="paper">Paper</option>
+                <option value="live">Live</option>
+              </select>
+            </div>
+            <div class="row">
+              <div class="field flex-basis-150">
+                <label for="cluster-mode">Cluster</label>
+                <select id="cluster-mode" data-worker="cluster">
+                  <option value="stopped">Stopped</option>
+                  <option value="paper" selected>Paper</option>
+                  <option value="live">Live</option>
+                </select>
+              </div>
+              <div class="field flex-basis-150">
+                <label for="serplus-mode">Serplus</label>
+                <select id="serplus-mode" data-worker="serplus">
+                  <option value="stopped">Stopped</option>
+                  <option value="paper" selected>Paper</option>
+                  <option value="live">Live</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Expression channels</h3>
+            <div class="field">
+              <label class="toggle"><input id="channel-attention" type="checkbox" checked /> Attention</label>
+              <label class="toggle"><input id="channel-economy" type="checkbox" checked /> Economy</label>
+              <label class="toggle"><input id="channel-pqre" type="checkbox" checked /> PQRE</label>
+              <label class="toggle"><input id="channel-trading" type="checkbox" /> Trading (OFF by default)</label>
+            </div>
+            <div class="muted">Channels update Sovereignty prefs `/v1/sovereign/prefs/channel`.</div>
+          </div>
+          <div class="card">
+            <h3>Audit</h3>
+            <div class="muted">Latest 50 lines: <a class="link" href="http://127.0.0.1:8802/v1/audit/tail?token=dev-token" target="_blank" rel="noopener">audit tail</a></div>
+            <div class="muted mt-12">Run readiness probe before Engage: task <strong>Readiness: Probe</strong>.</div>
+            <div class="muted mt-12">Promotion matrix: <a class="link" href="../../../../STATUS.md" target="_blank" rel="noopener">STATUS.md</a> · <a class="link" href="../../../../logs/promo/" target="_blank" rel="noopener">View evidence files</a></div>
+          </div>
+        </div>
+      </section>
+  </main>
+    <div id="risk-modal" class="modal-backdrop" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="risk-modal-title" aria-describedby="risk-modal-desc">
+        <h2 id="risk-modal-title">Confirm live mode</h2>
+        <p id="risk-modal-desc">Switching a worker to <strong>LIVE</strong> requires explicit consent. Type <em>I accept risk</em> to proceed.</p>
+        <input id="risk-confirm-input" type="text" aria-label="Type I accept risk to confirm" />
+        <div id="risk-modal-error" class="modal-error"></div>
+        <div class="modal-actions">
+          <button id="risk-confirm-btn" type="button" class="action-button">Confirm</button>
+          <button id="risk-cancel-btn" type="button" class="danger-button action-button">Cancel</button>
+        </div>
+      </div>
+    </div>
+  <script src="js/audit_stream.js"></script>
+  <script>
+      const state = {
+        token: new URLSearchParams(window.location.search).get('token') || 'dev-token',
+        gate: 'UNKNOWN',
+        road: 'SHOULDER',
+        consentRequired: 'i consent',
+        armed: false,
+        preflight: false,
+        apiBase: 'http://127.0.0.1:8802',
+        logLimit: 50,
+        auditStreamActive: false,
+        allowlistData: null,
+        allowlistReadOnly: true,
+        controlsLocked: true,
+      };
+
+      const logArea = document.getElementById('cap-log');
+      const btnArm = document.getElementById('btn-arm');
+      const btnPreflight = document.getElementById('btn-preflight');
+      const btnEngage = document.getElementById('btn-engage');
+      const btnStop = document.getElementById('btn-stop');
+      const consentInput = document.getElementById('consent-input');
+      const allowlistToggle = document.getElementById('internet-toggle');
+      const allowlistSaveBtn = document.getElementById('allowlist-save');
+      const allowlistTextarea = document.getElementById('allowlist-json');
+      const workerSelects = Array.from(document.querySelectorAll('select[data-worker]'));
+      const workerPrevModes = {};
+      workerSelects.forEach((select) => {
+        const key = select.dataset.worker || select.id;
+        workerPrevModes[key] = select.value;
+      });
+      const riskModal = document.getElementById('risk-modal');
+      const riskInput = document.getElementById('risk-confirm-input');
+      const riskError = document.getElementById('risk-modal-error');
+      const riskConfirmBtn = document.getElementById('risk-confirm-btn');
+      const riskCancelBtn = document.getElementById('risk-cancel-btn');
+      let modalContext = null;
+      const badges = {
+        token: document.getElementById('badge-token'),
+        audit: document.getElementById('badge-audit'),
+        gate: document.getElementById('badge-gate'),
+        road: document.getElementById('badge-road'),
+        clock: document.getElementById('badge-clock'),
+      };
+
+      function isModalOpen() {
+        return !!(riskModal && !riskModal.hasAttribute('hidden'));
+      }
+
+      function refreshEngageButton() {
+        if (!btnEngage) {
+          return;
+        }
+        const phrase = (consentInput.value || '').trim().toLowerCase();
+        const ready = state.preflight && phrase === state.consentRequired && !state.controlsLocked && !isModalOpen();
+        btnEngage.disabled = !ready;
+      }
+
+      function openRiskModal(worker, select, previousValue, desiredValue) {
+        if (!riskModal || !riskInput || !riskError) {
+          workerPrevModes[worker] = select.value;
+          return;
+        }
+        modalContext = { worker, select, previousValue, desiredValue };
+        if (select) {
+          select.value = previousValue;
+        }
+        riskError.textContent = '';
+        riskInput.value = '';
+        riskModal.removeAttribute('hidden');
+        requestAnimationFrame(() => riskInput.focus());
+        refreshEngageButton();
+      }
+
+      function closeRiskModal() {
+        if (!riskModal) {
+          modalContext = null;
+          return;
+        }
+        riskModal.setAttribute('hidden', '');
+        riskError.textContent = '';
+        const focusTarget = modalContext?.select;
+        modalContext = null;
+        if (focusTarget) {
+          focusTarget.focus({ preventScroll: true });
+        }
+        refreshEngageButton();
+      }
+
+      function confirmRiskModal() {
+        if (!modalContext) {
+          return;
+        }
+        const phrase = (riskInput?.value || '').trim().toLowerCase();
+        if (phrase !== 'i accept risk') {
+          if (riskError) {
+            riskError.textContent = 'Type “I accept risk” to confirm live mode.';
+          }
+          riskInput?.focus();
+          return;
+        }
+        const { worker, select, desiredValue } = modalContext;
+        if (select && desiredValue) {
+          select.value = desiredValue;
+        }
+        workerPrevModes[worker] = desiredValue || select?.value || 'paper';
+        log(`${worker} worker live mode acknowledged.`);
+        closeRiskModal();
+      }
+
+      function cancelRiskModal() {
+        if (!modalContext) {
+          return;
+        }
+        const { worker, select, previousValue } = modalContext;
+        if (select) {
+          select.value = previousValue;
+        }
+        workerPrevModes[worker] = previousValue;
+        log(`Live mode cancelled for ${worker}; reverted to ${previousValue || 'paper'}.`, 'warn');
+        closeRiskModal();
+      }
+
+      function setWorkerControlsEnabled(enabled) {
+        state.controlsLocked = !enabled;
+        workerSelects.forEach((select) => {
+          select.disabled = !enabled;
+        });
+        if (allowlistToggle) {
+          allowlistToggle.disabled = !enabled;
+        }
+        if (allowlistSaveBtn) {
+          const canSave = enabled && !state.allowlistReadOnly;
+          allowlistSaveBtn.disabled = !canSave;
+        }
+        if (consentInput) {
+          consentInput.disabled = !enabled && !state.armed;
+        }
+        refreshEngageButton();
+      }
+
+      function handleWorkerModeChange(event) {
+        const select = event.target;
+        if (!(select instanceof HTMLSelectElement)) {
+          return;
+        }
+        const worker = select.dataset.worker || select.id || 'worker';
+        const previousValue = workerPrevModes[worker] ?? 'paper';
+        const nextValue = select.value;
+        if (nextValue === 'live' && previousValue !== 'live') {
+          openRiskModal(worker, select, previousValue, nextValue);
+          return;
+        }
+        workerPrevModes[worker] = nextValue;
+      }
+
+      function handleGlobalShortcut(event) {
+        if (event.defaultPrevented) {
+          return;
+        }
+        if (isModalOpen()) {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            cancelRiskModal();
+          }
+          return;
+        }
+        if (!event.altKey || event.repeat) {
+          return;
+        }
+        const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+        if (['input', 'textarea', 'select'].includes(activeTag)) {
+          return;
+        }
+        const key = event.key.toLowerCase();
+        switch (key) {
+          case 'a':
+            event.preventDefault();
+            btnArm?.click();
+            break;
+          case 'p':
+            event.preventDefault();
+            btnPreflight?.click();
+            break;
+          case 'e':
+            event.preventDefault();
+            btnEngage?.click();
+            break;
+          case 's':
+            event.preventDefault();
+            btnStop?.click();
+            break;
+          default:
+            break;
+        }
+      }
+
+      function log(message, level = 'info') {
+        const ts = new Date().toISOString();
+        const line = document.createElement('div');
+        line.textContent = `[${ts}] ${message}`;
+        if (level === 'error') line.style.color = '#ff8097';
+        if (level === 'warn') line.style.color = '#f2c97d';
+        logArea.prepend(line);
+        while (logArea.childElementCount > state.logLimit) {
+          logArea.removeChild(logArea.lastChild);
+        }
+      }
+
+      function setBadge(el, label, tone) {
+        el.textContent = label;
+        el.classList.remove('good', 'warn', 'danger');
+        if (tone) {
+          el.classList.add(tone);
+        }
+      }
+
+      function updateTokenBadge() {
+        if (state.token) {
+          setBadge(badges.token, `Token: ${state.token}`, 'good');
+        } else {
+          setBadge(badges.token, 'Token: Missing', 'danger');
+        }
+      }
+
+      function tickClock() {
+        const now = new Date();
+        setBadge(badges.clock, now.toLocaleTimeString(), null);
+      }
+
+      async function fetchWithToken(path, options = {}) {
+        const url = new URL(path, state.apiBase);
+        if (!url.searchParams.has('token')) {
+          url.searchParams.set('token', state.token);
+        }
+        try {
+          const response = await fetch(url.toString(), {
+            ...options,
+            headers: {
+              'Content-Type': 'application/json',
+              ...(options.headers || {}),
+            },
+          });
+          const data = await response.json().catch(() => null);
+          return { ok: response.ok, status: response.status, data };
+        } catch (err) {
+          return { ok: false, status: 0, error: err };
+        }
+      }
+
+      async function updateStatusSummary() {
+        const result = await fetchWithToken('/v1/status/summary');
+        if (!result.ok || !result.data) {
+          log('Unable to fetch status summary.', 'warn');
+          setBadge(badges.gate, 'Gate: UNKNOWN', 'warn');
+          return null;
+        }
+        const { gate, readiness } = result.data;
+        state.gate = gate || 'HOLD';
+        setBadge(badges.gate, `Gate: ${gate}`, gate === 'ALLOW' ? 'good' : gate === 'REVIEW' ? 'warn' : 'danger');
+        setBadge(badges.road, `Mode: ${result.data.signals?.mode || 'ROAD'}`, gate === 'ALLOW' ? 'good' : 'warn');
+        badges.audit.textContent = `Audit: ${result.data.signals ? 'Live' : 'Pending'}`;
+        badges.audit.classList.toggle('good', !!result.data.signals);
+        badges.audit.classList.toggle('warn', !result.data.signals);
+        return result.data;
+      }
+
+      function onAuditStreamData(rawLine) {
+        if (!rawLine) {
+          return;
+        }
+        let message = rawLine;
+        try {
+          const payload = JSON.parse(rawLine);
+          if (payload && payload.heartbeat) {
+            log('Audit heartbeat');
+            return;
+          }
+          const descriptor = payload && payload.event ? `Audit ${payload.event}` : 'Audit entry';
+          message = `${descriptor}: ${JSON.stringify(payload)}`;
+        } catch (err) {
+          message = `Audit ${rawLine}`;
+        }
+        log(message);
+      }
+
+      function startAuditStream() {
+        if (state.auditStreamActive) {
+          return;
+        }
+        if (!window.AuditStream || typeof window.AuditStream.start !== 'function') {
+          log('Audit stream module unavailable.', 'warn');
+          return;
+        }
+        const url = `${state.apiBase}/v1/audit/tail/stream?token=${encodeURIComponent(state.token)}`;
+        window.AuditStream.start(url, { onData: onAuditStreamData });
+        state.auditStreamActive = true;
+        log('Audit stream connected.');
+      }
+
+      function stopAuditStream() {
+        if (window.AuditStream && typeof window.AuditStream.stop === 'function') {
+          window.AuditStream.stop();
+        }
+        state.auditStreamActive = false;
+      }
+
+      function updateAllowlistUI(options = {}) {
+        const badge = document.getElementById('allowlist-readonly');
+        const statusLine = document.getElementById('allowlist-status');
+        const readOnly = !!state.allowlistReadOnly;
+
+        if (badge) {
+          const label = readOnly ? 'Read-only' : 'Editable';
+          setBadge(badge, label, readOnly ? 'warn' : 'good');
+          badge.setAttribute('aria-live', 'polite');
+        }
+
+        if (allowlistTextarea) {
+          allowlistTextarea.readOnly = readOnly;
+          if (options.populate && state.allowlistData) {
+            try {
+              allowlistTextarea.value = JSON.stringify(state.allowlistData, null, 2);
+            } catch (err) {
+              allowlistTextarea.value = JSON.stringify({ error: 'Unable to render allowlist' });
+            }
+          }
+        }
+
+        if (allowlistSaveBtn) {
+          const canSave = !readOnly && !state.controlsLocked;
+          allowlistSaveBtn.disabled = !canSave;
+        }
+
+        if (allowlistToggle) {
+          allowlistToggle.disabled = state.controlsLocked;
+        }
+
+        if (statusLine) {
+          statusLine.textContent = readOnly
+            ? 'Read-only; set read_only=false in logs/allowlist.json to enable edits.'
+            : 'Editable; changes will be audited on save.';
+        }
+      }
+
+      async function loadAllowlist() {
+        const result = await fetchWithToken('/v1/internet/allowlist');
+        if (!result.ok || !result.data) {
+          log('Unable to load internet allowlist.', 'warn');
+          return;
+        }
+        state.allowlistData = result.data;
+        state.allowlistReadOnly = !!result.data.read_only;
+        updateAllowlistUI({ populate: true });
+        const domains = Array.isArray(result.data.domains) ? result.data.domains.length : 0;
+        log(`Allowlist loaded (${domains} domains).`);
+      }
+
+      async function saveAllowlist() {
+        if (state.allowlistReadOnly) {
+          log('Allowlist is read-only; update logs/allowlist.json to enable edits.', 'warn');
+          return;
+        }
+        if (!allowlistTextarea) {
+          return;
+        }
+        let payload;
+        try {
+          payload = JSON.parse(allowlistTextarea.value || '{}');
+        } catch (err) {
+          log(`Allowlist JSON error: ${err.message}`, 'error');
+          return;
+        }
+        if (allowlistSaveBtn) {
+          allowlistSaveBtn.disabled = true;
+        }
+        const result = await fetchWithToken('/v1/internet/allowlist/update', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!result.ok || !result.data) {
+          const detail = result.data && result.data.detail ? result.data.detail : `status ${result.status}`;
+          log(`Allowlist update rejected: ${detail}.`, 'warn');
+          if (allowlistSaveBtn && !state.allowlistReadOnly && !state.controlsLocked) {
+            allowlistSaveBtn.disabled = false;
+          }
+          return;
+        }
+        const allowlist = result.data.allowlist || payload;
+        state.allowlistData = allowlist;
+        const readOnlyFlag = allowlist && typeof allowlist === 'object' && Object.prototype.hasOwnProperty.call(allowlist, 'read_only')
+          ? !!allowlist.read_only
+          : false;
+        state.allowlistReadOnly = readOnlyFlag;
+        updateAllowlistUI({ populate: true });
+        if (!state.allowlistReadOnly && allowlistSaveBtn && !state.controlsLocked) {
+          allowlistSaveBtn.disabled = false;
+        }
+        log('Allowlist updated and audited.');
+      }
+
+      function stopVoice() {
+        if (window.VoiceLipSync && typeof window.VoiceLipSync.stop === 'function') {
+          try {
+            window.VoiceLipSync.stop();
+          } catch (err) {
+            log(`VoiceLipSync stop failed: ${err}`, 'warn');
+          }
+        }
+      }
+
+      async function armSequence() {
+        log('Arm requested. Fetching status...');
+        const status = await updateStatusSummary();
+        stopVoice();
+        if (status && status.signals?.crown) {
+          log('Crown signal detected; attaching to avatar.');
+          document.body.classList.add('crowned');
+        }
+        state.armed = true;
+        setWorkerControlsEnabled(true);
+        btnPreflight.disabled = false;
+        consentInput.disabled = false;
+        log('System armed. Proceed to Preflight.');
+      }
+
+      async function applyChannel(channel, enabled) {
+        const payload = { channel, express: !!enabled };
+        const result = await fetchWithToken('/v1/sovereign/prefs/channel', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!result.ok) {
+          log(`Channel update failed for ${channel} (status ${result.status})`, 'warn');
+        } else {
+          log(`Channel ${channel} set to ${enabled ? 'ON' : 'OFF'}.`);
+        }
+      }
+
+      async function runPreflight() {
+        if (!state.armed) {
+          log('Cannot preflight before Arm.', 'warn');
+          return;
+        }
+        const status = await updateStatusSummary();
+        if (!status) {
+          log('Preflight aborted: status unavailable.', 'error');
+          return;
+        }
+        await loadAllowlist();
+        if (state.gate === 'HOLD') {
+          log('Gate is HOLD. Resolve readiness before Engage.', 'warn');
+        }
+        if (!document.getElementById('internet-toggle').checked) {
+          log('Internet allowlist is OFF. Engage will default to offline.', 'warn');
+        }
+        await applyChannel('trading', false);
+        state.preflight = true;
+        btnEngage.disabled = false;
+        log('Preflight complete. Confirm consent to Engage.');
+        refreshEngageButton();
+      }
+
+      function gatherWorkerModes() {
+        return {
+          trading: document.getElementById('trading-mode').value,
+          cluster: document.getElementById('cluster-mode').value,
+          serplus: document.getElementById('serplus-mode').value,
+        };
+      }
+
+      async function updateWorkerMode(worker, mode) {
+        const payload = { worker, mode };
+        const result = await fetchWithToken(`/v1/${worker}/mode`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!result.ok) {
+          log(`Worker ${worker} mode update (${mode}) returned ${result.status}`, 'warn');
+        } else {
+          log(`Worker ${worker} set to ${mode}.`);
+        }
+      }
+
+      async function runEngage() {
+        if (!state.preflight) {
+          log('Preflight has not been executed.', 'warn');
+          return;
+        }
+        const phrase = (consentInput.value || '').trim().toLowerCase();
+        if (phrase !== state.consentRequired) {
+          log('Consent phrase mismatch; type “I consent”.', 'warn');
+          return;
+        }
+        if (isModalOpen()) {
+          log('Resolve live-mode confirmation before Engage.', 'warn');
+          return;
+        }
+        log('Engage initiated. Applying channel configuration...');
+        const channels = [
+          { id: 'channel-attention', name: 'attention' },
+          { id: 'channel-economy', name: 'economy' },
+          { id: 'channel-pqre', name: 'pqre' },
+          { id: 'channel-trading', name: 'trading' },
+        ];
+        for (const channel of channels) {
+          const enabled = (document.getElementById(channel.id)?.checked) ?? false;
+          // trading channel stays off unless explicitly enabled
+          await applyChannel(channel.name, channel.name === 'trading' ? enabled : enabled);
+        }
+        const internetEnabled = document.getElementById('internet-toggle').checked;
+        if (internetEnabled) {
+          await fetchWithToken('/v1/internet/allowlist', {
+            method: 'POST',
+            body: JSON.stringify({ mode: 'read-only' }),
+          });
+          log('Internet allowlist set to read-only.');
+        } else {
+          log('Internet access remains offline.');
+        }
+        const modes = gatherWorkerModes();
+        for (const [worker, mode] of Object.entries(modes)) {
+          await updateWorkerMode(worker, mode);
+        }
+        startAuditStream();
+        log('Capstone Engage complete. Continue monitoring audit tail.');
+      }
+
+      async function emergencyStop() {
+        log('EMERGENCY STOP ACTIVATED', 'error');
+        const channelIds = ['channel-attention', 'channel-economy', 'channel-pqre', 'channel-trading'];
+        for (const id of channelIds) {
+          const checkbox = document.getElementById(id);
+          if (checkbox) {
+            checkbox.checked = false;
+            await applyChannel(checkbox.id.replace('channel-', ''), false);
+          }
+        }
+        await fetchWithToken('/v1/internet/allowlist', {
+          method: 'POST',
+          body: JSON.stringify({ mode: 'offline' }),
+        });
+        log('Internet access forced offline.');
+        log('AUDIT STOP dispatched; stream closing.', 'error');
+        stopAuditStream();
+        stopVoice();
+        state.armed = false;
+        state.preflight = false;
+        setWorkerControlsEnabled(false);
+        if (btnPreflight) {
+          btnPreflight.disabled = true;
+        }
+        if (btnEngage) {
+          btnEngage.disabled = true;
+        }
+        if (consentInput) {
+          consentInput.value = '';
+          consentInput.disabled = true;
+        }
+        if (allowlistToggle) {
+          allowlistToggle.checked = false;
+        }
+        workerSelects.forEach((select) => {
+          const worker = select.dataset.worker || select.id;
+          workerPrevModes[worker] = select.value;
+        });
+      }
+
+      btnArm.addEventListener('click', armSequence);
+      btnPreflight.addEventListener('click', runPreflight);
+      btnEngage.addEventListener('click', runEngage);
+      btnStop.addEventListener('click', emergencyStop);
+      workerSelects.forEach((select) => {
+        select.addEventListener('change', handleWorkerModeChange);
+      });
+      if (allowlistSaveBtn) {
+        allowlistSaveBtn.addEventListener('click', saveAllowlist);
+      }
+      if (allowlistToggle) {
+        allowlistToggle.addEventListener('change', () => {
+          const enabled = allowlistToggle.checked;
+          log(`Internet allowlist ${enabled ? 'enabled' : 'disabled'} (local control).`);
+        });
+      }
+      if (riskConfirmBtn) {
+        riskConfirmBtn.addEventListener('click', confirmRiskModal);
+      }
+      if (riskCancelBtn) {
+        riskCancelBtn.addEventListener('click', cancelRiskModal);
+      }
+      if (riskInput) {
+        riskInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            confirmRiskModal();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            cancelRiskModal();
+          }
+        });
+      }
+      if (riskModal) {
+        riskModal.addEventListener('click', (event) => {
+          if (event.target === riskModal) {
+            cancelRiskModal();
+          }
+        });
+      }
+      document.addEventListener('keydown', handleGlobalShortcut);
+      consentInput.addEventListener('input', refreshEngageButton);
+
+      window.addEventListener('beforeunload', () => {
+        stopAuditStream();
+      });
+
+      updateTokenBadge();
+      tickClock();
+      setWorkerControlsEnabled(false);
+  updateAllowlistUI({ populate: true });
+      setInterval(tickClock, 1000);
+      log('Capstone dashboard loaded. Use Arm → Preflight → Engage.');
+    </script>
+  </body>
+</html>

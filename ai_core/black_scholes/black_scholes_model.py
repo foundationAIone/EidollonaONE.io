@@ -320,8 +320,23 @@ def implied_vol_bsm(
     lo, hi = sigma_lo, sigma_hi
     plo = price_bsm(S, K, T, r, lo, q, side)
     phi = price_bsm(S, K, T, r, hi, q, side)
+
+    # SymbolicEquation-guided expansion cap reacts to how far the current
+    # bracket prices are from the target, promoting stability in SAFE mode.
+    se_hint = se41_numeric(
+        DNA_states=[
+            _clamp(abs(target_price - plo), 0.0, max(1.0, target_price + 1e-6)),
+            _clamp(abs(phi - target_price), 0.0, max(1.0, target_price + 1e-6)),
+            _clamp(hi - lo, 0.0, 10.0),
+            _clamp(T, 0.0, 10.0),
+            _clamp(sigma_hi - sigma_lo, 0.0, 10.0),
+        ],
+        harmonic_patterns=[1.0, 0.97, 1.08],
+    )
+    expansion_cap = max(5, min(20, int(8 + abs(se_hint.get("score", 0.5)) * 8)))
+
     n_expand = 0
-    while phi < target_price and n_expand < 20:
+    while phi < target_price and n_expand < expansion_cap:
         hi *= 2.0
         phi = price_bsm(S, K, T, r, hi, q, side)
         n_expand += 1

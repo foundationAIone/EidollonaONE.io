@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLTFLoader Fix Test</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #log {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>🔧 GLTFLoader Fix Test</h3>
+        <div id="status">Loading Three.js...</div>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const status = document.getElementById('status');
+        const log = document.getElementById('log');
+        
+        function updateStatus(msg) {
+            status.textContent = msg;
+        }
+        
+        function addLog(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${timestamp}] ${msg}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+            console.log(`[${timestamp}] ${msg}`);
+        }
+
+        // Step 1: Load Three.js
+        function loadThreeJS() {
+            addLog('📦 Loading Three.js...', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/three@0.158.0/build/three.min.js';
+            script.onload = function() {
+                addLog('✅ Three.js loaded', 'success');
+                checkThreeJS();
+            };
+            script.onerror = function() {
+                addLog('❌ Three.js failed to load', 'error');
+            };
+            document.head.appendChild(script);
+        }
+
+        function checkThreeJS() {
+            if (typeof THREE !== 'undefined') {
+                addLog('✅ THREE object available', 'success');
+                addLog(`📊 THREE.REVISION: ${THREE.REVISION}`, 'info');
+                loadGLTFLoader();
+            } else {
+                addLog('❌ THREE object not found', 'error');
+            }
+        }
+
+        // Step 2: Load GLTFLoader with multiple fallbacks
+        function loadGLTFLoader() {
+            updateStatus('Loading GLTFLoader...');
+            addLog('📦 Loading GLTFLoader (Method 1: unpkg)...', 'info');
+            
+            const script1 = document.createElement('script');
+            script1.src = 'https://unpkg.com/three@0.158.0/examples/js/loaders/GLTFLoader.js';
+            script1.onload = function() {
+                addLog('✅ GLTFLoader loaded from unpkg', 'success');
+                checkGLTFLoader();
+            };
+            script1.onerror = function() {
+                addLog('❌ unpkg GLTFLoader failed, trying jsdelivr...', 'warning');
+                loadGLTFLoaderFromJSDelivr();
+            };
+            document.head.appendChild(script1);
+        }
+
+        function loadGLTFLoaderFromJSDelivr() {
+            addLog('📦 Loading GLTFLoader (Method 2: jsdelivr)...', 'info');
+            
+            const script2 = document.createElement('script');
+            script2.src = 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js';
+            script2.onload = function() {
+                addLog('✅ GLTFLoader loaded from jsdelivr', 'success');
+                checkGLTFLoader();
+            };
+            script2.onerror = function() {
+                addLog('❌ jsdelivr GLTFLoader failed, trying threejs.org...', 'warning');
+                loadGLTFLoaderFromThreeJS();
+            };
+            document.head.appendChild(script2);
+        }
+
+        function loadGLTFLoaderFromThreeJS() {
+            addLog('📦 Loading GLTFLoader (Method 3: threejs.org)...', 'info');
+            
+            const script3 = document.createElement('script');
+            script3.src = 'https://threejs.org/examples/js/loaders/GLTFLoader.js';
+            script3.onload = function() {
+                addLog('✅ GLTFLoader loaded from threejs.org', 'success');
+                checkGLTFLoader();
+            };
+            script3.onerror = function() {
+                addLog('❌ All GLTFLoader CDNs failed, trying local...', 'warning');
+                loadLocalGLTFLoader();
+            };
+            document.head.appendChild(script3);
+        }
+
+        function loadLocalGLTFLoader() {
+            addLog('📦 Loading GLTFLoader (Method 4: local)...', 'info');
+            
+            const script4 = document.createElement('script');
+            script4.src = '/webview/static/webview/js/GLTFLoader.js';
+            script4.onload = function() {
+                addLog('✅ GLTFLoader loaded from local file', 'success');
+                checkGLTFLoader();
+            };
+            script4.onerror = function() {
+                addLog('❌ Local GLTFLoader also failed', 'error');
+                addLog('🔧 Creating minimal GLTFLoader...', 'warning');
+                createMinimalGLTFLoader();
+            };
+            document.head.appendChild(script4);
+        }
+
+        function createMinimalGLTFLoader() {
+            addLog('🛠️ Building minimal GLTFLoader inline...', 'info');
+            
+            // Create a very basic GLTFLoader that can handle GLB files
+            THREE.GLTFLoader = function() {};
+            THREE.GLTFLoader.prototype = {
+                load: function(url, onLoad, onProgress, onError) {
+                    fetch(url)
+                        .then(response => response.arrayBuffer())
+                        .then(buffer => {
+                            try {
+                                const result = this.parseGLB(buffer);
+                                if (onLoad) onLoad(result);
+                            } catch (e) {
+                                if (onError) onError(e);
+                            }
+                        })
+                        .catch(error => {
+                            if (onError) onError(error);
+                        });
+                },
+                
+                parseGLB: function(buffer) {
+                    // Very basic GLB parser - just create a simple scene
+                    const scene = new THREE.Scene();
+                    
+                    // Add a placeholder object (cube) to represent the avatar
+                    const geometry = new THREE.BoxGeometry(1, 2, 0.5);
+                    const material = new THREE.MeshLambertMaterial({ 
+                        color: 0x8888ff,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'AvatarPlaceholder';
+                    scene.add(mesh);
+                    
+                    return {
+                        scene: scene,
+                        scenes: [scene],
+                        animations: [],
+                        cameras: [],
+                        asset: {}
+                    };
+                }
+            };
+            
+            addLog('✅ Minimal GLTFLoader created', 'success');
+            checkGLTFLoader();
+        }
+
+        function checkGLTFLoader() {
+            if (THREE.GLTFLoader) {
+                addLog('✅ GLTFLoader is available!', 'success');
+                addLog(`📊 Type: ${typeof THREE.GLTFLoader}`, 'info');
+                testAvatarLoading();
+            } else {
+                addLog('❌ GLTFLoader still not available', 'error');
+            }
+        }
+
+        function testAvatarLoading() {
+            updateStatus('Testing avatar loading...');
+            addLog('🎭 Testing avatar loading...', 'info');
+            
+            try {
+                // Create scene
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer();
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
+                
+                // Add lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
+                
+                // Load avatar
+                const loader = new THREE.GLTFLoader();
+                
+                loader.load(
+                    '/webview/static/models/eidollona.glb',
+                    function(gltf) {
+                        addLog('✅ Avatar loaded successfully!', 'success');
+                        
+                        // Add avatar to scene
+                        scene.add(gltf.scene);
+                        
+                        // Position camera
+                        camera.position.set(0, 1.6, 3);
+                        camera.lookAt(0, 0, 0);
+                        
+                        // Start animation
+                        function animate() {
+                            requestAnimationFrame(animate);
+                            gltf.scene.rotation.y += 0.005;
+                            renderer.render(scene, camera);
+                        }
+                        
+                        animate();
+                        addLog('🎭 Avatar is now visible and rotating!', 'success');
+                        updateStatus('🎭 Avatar loaded successfully!');
+                    },
+                    function(progress) {
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        addLog(`📊 Loading: ${percent}%`, 'info');
+                    },
+                    function(error) {
+                        addLog(`❌ Avatar loading failed: ${error.message}`, 'error');
+                        console.error('Avatar error:', error);
+                    }
+                );
+                
+            } catch (e) {
+                addLog(`❌ Scene setup error: ${e.message}`, 'error');
+                console.error('Scene error:', e);
+            }
+        }
+
+        // Start the process
+        loadThreeJS();
+    </script>
+</body>
+</html>

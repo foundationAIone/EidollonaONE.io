@@ -19,7 +19,7 @@ import logging
 log = logging.getLogger(__name__)
 
 try:  # pragma: no cover
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
     from trading.helpers.se41_trading_gate import se41_numeric, ethos_decision  # type: ignore
 except Exception:  # fallback stubs
 

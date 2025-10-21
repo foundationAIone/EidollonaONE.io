@@ -399,8 +399,13 @@ class PurchaseManager:
 
         req.se41_numeric_score = float(eval_out["score"])
         # ethos decision (uses Four Pillars; we pass minimal signals context)
-        ethos = ethos_decision(eval_out["signals"])
-        req.ethos_gate = ethos["decision"]
+        ethos_raw = ethos_decision(eval_out["signals"])  # tuple or dict
+        if isinstance(ethos_raw, tuple):
+            _d, _r = ethos_raw
+            ethos = {"decision": _d, "reasons": [_r]}
+        else:
+            ethos = ethos_raw
+        req.ethos_gate = ethos.get("decision", "hold")
         req.ethos_reasons = ethos.get("reasons", [])
         req.se41 = None  # (optional) keep light; heavy packet would be SE41Signals
 

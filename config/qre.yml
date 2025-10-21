@@ -1,0 +1,52 @@
+version: "0.1-se43"
+consent:
+  required: true
+  modes: ["operator", "participant"]
+  revoke_path: "qre/audit.py::record_revocation"
+  pii_retention_sec: 0
+sensing:
+  slam_vio:
+    enabled: true
+    tracker: "vio"
+    max_latency_ms: 12
+  depth_mesh:
+    enabled: true
+    max_range_m: 6.0
+    resolution: "medium"
+  semantics:
+    enabled: true
+    ontology: "citadel_surface"
+    confidence_floor: 0.65
+lighting:
+  probes: 3
+  enable_dynamic: true
+  exposure_lock: false
+renderer:
+  modes:
+    - name: "webview"
+      target_ms: 16.6
+      features: ["hud", "avatars"]
+    - name: "ar"
+      target_ms: 20.0
+      features: ["anchors", "meshing"]
+    - name: "vr"
+      target_ms: 11.1
+      features: ["stereo", "hud"]
+  bridge: "qre.renderer_bridge.RendererBridge"
+  base12_phase_budget: 12
+scheduler:
+  phases: 12
+  cadence: "base12"
+  guardrails:
+    max_frame_ms: 22
+    audit_every: 12
+  ndjson_prefix: "qre_scheduler"
+auditing:
+  stream: "logs/audit.ndjson"
+  qre_stream: "logs/qre.ndjson"
+  event_prefix: "qre_"
+privacy:
+  anonymize_templates: true
+  allow_raw_frames: false
+  retention_sec: 0
+notes: "Consent-first AR/VR/WebView skeleton with deterministic NDJSON instrumentation."

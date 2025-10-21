@@ -4,7 +4,7 @@ Scores volatility regime & emits hedge / harvest suggestions.
 
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 import time
 import random
 import logging
@@ -12,22 +12,31 @@ import json
 
 try:  # pragma: no cover
     from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
-    from trading.helpers.se41_trading_gate import se41_signals, ethos_decision, se41_numeric  # type: ignore
+    # Prefer modern context builder to avoid legacy shim warnings
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
+    from trading.helpers.se41_trading_gate import (
+        se41_signals,
+        ethos_decision_envelope,
+        se41_numeric,
+    )  # type: ignore
 except Exception:  # pragma: no cover
     SymbolicEquation41 = object  # type: ignore
 
     def assemble_se41_context():
         return {"now": time.time()}
 
-    def se41_signals(d):
+    def _fallback_se41_signals(*args, **kwargs):
+        d = args[0] if args and isinstance(args[0], dict) else {}
         return {"confidence": 0.55, "features": d}
+    se41_signals = cast(Any, _fallback_se41_signals)
 
-    def ethos_decision(tx):
+    def _fallback_ethos_decision_envelope(tx):
         return {"decision": "allow"}
+    ethos_decision_envelope = cast(Any, _fallback_ethos_decision_envelope)
 
-    def se41_numeric(**_):
+    def _fallback_se41_numeric(M_t=None, DNA_states=None, harmonic_patterns=None):
         return 0.55
+    se41_numeric = cast(Any, _fallback_se41_numeric)
 
 
 log = logging.getLogger(__name__)
@@ -73,7 +82,13 @@ class VolatilityBot:
         }
 
     def decide(self, obs: Dict[str, Any]) -> Tuple[float, Dict[str, Any]]:
-        feats = se41_signals(obs)
+        try:
+            feats = se41_signals(obs) or {}
+        except Exception:
+            try:
+                feats = se41_signals({}) or {}
+            except Exception:
+                feats = {}
         premium = obs["implied"] - obs["realized"]
         premium_n = (premium + 0.1) / 0.2
         premium_n = max(0.0, min(1.0, premium_n))
@@ -96,7 +111,9 @@ class VolatilityBot:
         if score < self.cfg.risk_threshold:
             self.state.held += 1
             return "hold"
-        dec = ethos_decision({"scope": self.cfg.name, "score": score, "meta": meta})
+        dec = ethos_decision_envelope(
+            {"scope": self.cfg.name, "score": score, "meta": meta}
+        )
         if isinstance(dec, dict) and dec.get("decision") == "deny":
             self.state.denied += 1
             return "deny"

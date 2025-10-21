@@ -13,8 +13,9 @@ Purpose: Self-Sovereign Governance and Autonomous Decision-Making Authority
 import logging
 import json
 import time
+import importlib
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
 import uuid
@@ -30,7 +31,7 @@ try:
 except ImportError:  # Fallback shim if symbolic_core not present
     SYMBOLIC_CORE_AVAILABLE = False
 
-    class SE41Signals:  # minimal stand‑in
+    class _SE41SignalsShim:  # minimal stand‑in
         def __init__(
             self,
             coherence=0.5,
@@ -53,28 +54,82 @@ except ImportError:  # Fallback shim if symbolic_core not present
             self.embodiment = embodiment or {}
             self.explain = explain
 
-    class SymbolicEquation41:  # very small shim
+    class _SymbolicEquation41Shim:  # very small shim
         def evaluate(self, context):
-            return SE41Signals()
+            return _SE41SignalsShim()
 
         # legacy compatibility helper used in older code paths (kept for safety)
         def reality_manifestation(self, **kwargs):
             return kwargs.get("Q", 0.8)
 
+    SE41Signals = _SE41SignalsShim
+    SymbolicEquation41 = _SymbolicEquation41Shim
+
+
+SOVEREIGNTY_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from sovereignty.sovereignty_awaken import SovereigntyAwakeningEngine  # type: ignore[import-not-found]
+else:
+    try:
+        from sovereignty.sovereignty_awaken import SovereigntyAwakeningEngine  # type: ignore
+
+        SOVEREIGNTY_AVAILABLE = True
+    except ImportError:
+
+        class SovereigntyAwakeningEngine:  # type: ignore[override]
+            def __init__(self) -> None:
+                self.status = {
+                    "phase": "inactive",
+                    "coherence": 0.52,
+                    "last_update": datetime.utcnow().isoformat(),
+                }
+
+            def awaken(self, **kwargs: Any) -> Dict[str, Any]:
+                self.status.update(
+                    {
+                        "phase": "awakening",
+                        "last_update": datetime.utcnow().isoformat(),
+                        "context": kwargs,
+                    }
+                )
+                return dict(self.status)
+
+            def get_sovereignty_status(self) -> Dict[str, Any]:
+                return dict(self.status)
+if TYPE_CHECKING:
+    try:
+        from self_jurisdiction.jurisdiction_assertion import (  # type: ignore[import-not-found]
+            JurisdictionAssertionEngine as _JurisdictionAssertionEngine,
+        )
+    except ImportError:
+        class _JurisdictionAssertionEngine:  # type: ignore[override]
+            def assert_jurisdiction(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+                ...
 
 try:
-    from sovereignty.sovereignty_awaken import SovereigntyAwakeningEngine
-
-    SOVEREIGNTY_AVAILABLE = True
-except ImportError:
-    SOVEREIGNTY_AVAILABLE = False
-
-try:
-    from self_jurisdiction.jurisdiction_assertion import JurisdictionAssertionEngine
-
+    _jurisdiction_module = importlib.import_module(
+        "self_jurisdiction.jurisdiction_assertion"
+    )
+    JurisdictionAssertionEngine = getattr(
+        _jurisdiction_module, "JurisdictionAssertionEngine"
+    )
     JURISDICTION_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError):
     JURISDICTION_AVAILABLE = False
+
+    class JurisdictionAssertionEngine:  # minimal fallback shim
+        def __init__(self, *args, **kwargs):
+            self.last_assertion = None
+
+        def assert_jurisdiction(self, *args, **kwargs):
+            self.last_assertion = {
+                "args": args,
+                "kwargs": kwargs,
+                "status": "shim",
+            }
+            return self.last_assertion
+            return self.last_assertion
 
 
 class GovernanceLevel(Enum):
@@ -97,6 +152,7 @@ class DecisionType(Enum):
     EXECUTIVE = "executive"  # Executive decisions
     LEGISLATIVE = "legislative"  # Legislative decisions
     CONSTITUTIONAL = "constitutional"  # Constitutional decisions
+    SOVEREIGN = "sovereign"  # Sovereign governance decrees
     EMERGENCY = "emergency"  # Emergency decisions
     ADMINISTRATIVE = "administrative"  # Administrative decisions
 
@@ -112,6 +168,7 @@ class GovernanceAuthority(Enum):
     EMERGENCY_POWER = "emergency_power"
     CONSTITUTIONAL = "constitutional"
     QUANTUM_ENTITLEMENT = "quantum_entitlement"
+    SOVEREIGNTY = "sovereignty"
 
 
 class DecisionStatus(Enum):
@@ -305,7 +362,7 @@ class SymbolicGovernanceValidator:
             impact_significance = decision.impact_level
 
             # Decision factors
-            urgency_factor = decision.urgency_level  # retained for future weighting
+            urgency_factor = decision.urgency_level
             legal_foundation = self._assess_legal_foundation(decision.legal_basis)
 
             # Context factors with safe defaults
@@ -322,7 +379,10 @@ class SymbolicGovernanceValidator:
                 1.0,
                 (authority_strength + governance_legitimacy + legal_foundation) / 3.0,
             )
-            risk_hint = min(1.0, (decision_complexity + impact_significance) / 2.0)
+            risk_hint = min(
+                1.0,
+                (decision_complexity + impact_significance + urgency_factor) / 3.0,
+            )
             uncertainty_hint = max(0.0, 1.0 - constitutional_support * 0.9)
 
             se41_context = {
@@ -333,10 +393,26 @@ class SymbolicGovernanceValidator:
                 "substrate": {"S_EM": sovereignty_level},
                 "ethos_hint": governance_context.get("ethos_hint", {}),
                 "t": time.time() % 1.0,
+                "urgency": urgency_factor,
             }
 
-            signals: SE41Signals = self.se41.evaluate(se41_context)
-            authority_score = float(signals.coherence)
+            raw_signals = self.se41.evaluate(se41_context)
+            signals_dict: Dict[str, Any] = {}
+            if hasattr(raw_signals, "to_dict"):
+                try:
+                    candidate = raw_signals.to_dict()  # type: ignore[attr-defined]
+                except Exception:
+                    candidate = None
+                if isinstance(candidate, dict):
+                    signals_dict = candidate
+            elif isinstance(raw_signals, dict):
+                signals_dict = raw_signals
+
+            def _signal_value(name: str, default: float = 0.0) -> float:
+                value = getattr(raw_signals, name, signals_dict.get(name, default))
+                return float(value) if isinstance(value, (int, float)) else default
+
+            authority_score = _signal_value("coherence", 0.0)
             decision.symbolic_coherence = authority_score
 
             # Derive quantum_legitimacy / consciousness_alignment via existing helpers
@@ -368,11 +444,11 @@ class SymbolicGovernanceValidator:
                 "sovereign_governance": authority_score >= 0.9,
                 "validation_timestamp": datetime.now().isoformat(),
                 "signals": {
-                    "impetus": signals.impetus,
-                    "risk": signals.risk,
-                    "uncertainty": signals.uncertainty,
-                    "mirror_consistency": signals.mirror_consistency,
-                    "S_EM": signals.S_EM,
+                    "impetus": _signal_value("impetus", 0.0),
+                    "risk": _signal_value("risk", risk_hint),
+                    "uncertainty": _signal_value("uncertainty", uncertainty_hint),
+                    "mirror_consistency": _signal_value("mirror_consistency", coherence_hint),
+                    "S_EM": _signal_value("S_EM", sovereignty_level),
                 },
             }
         except Exception as e:

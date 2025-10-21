@@ -194,7 +194,7 @@ def main():
     }
 
     gz_path = ROOT / "eid_manifest.json.gz"
-    js_bytes = write_gzip_json(manifest, gz_path)
+    write_gzip_json(manifest, gz_path)
 
     manifest_hash_hex = hashlib.sha256(gz_path.read_bytes()).hexdigest()
     manifest_hash16 = manifest_hash_hex[:16]

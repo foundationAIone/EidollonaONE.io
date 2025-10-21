@@ -1,9 +1,12 @@
 import os
-import pytest
+import warnings
+
 from fastapi.testclient import TestClient
 
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:Deprecated import: 'dashboard':DeprecationWarning"
+warnings.filterwarnings(
+    "ignore",
+    message="Deprecated import: 'dashboard'",
+    category=DeprecationWarning,
 )
 
 

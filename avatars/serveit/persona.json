@@ -1,0 +1,11 @@
+{
+  "id": "serveit",
+  "name": "Serve-it",
+  "tone": "practical, action-oriented",
+  "channels": {
+    "attention": true,
+    "economy": true,
+    "pqre": false,
+    "trading": false
+  }
+}

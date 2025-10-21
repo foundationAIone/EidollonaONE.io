@@ -21,30 +21,27 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Protocol
 
 # v4.1 core + shared context
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from symbolic_core.se41_context import assemble_se41_context
+from symbolic_core.context_builder import assemble_se41_context
 
 # Shared trading helper (centralized; no in-file helper injection)
 from trading.helpers.se41_trading_gate import se41_signals, ethos_decision
 
 # Optional: link to the trade executor for actual orders (if present)
 try:
-    from trading_engine.ai_trade_executor import (
-        AITradeExecutor,
-        Portfolio,
-    )
-
-    TRADE_EXECUTOR_AVAILABLE = True
+    from trading_engine.ai_trade_executor import AITradeExecutor as _AITradeExecutor  # type: ignore
+    _HAS_EXECUTOR = True
 except Exception:
-    TRADE_EXECUTOR_AVAILABLE = False
+    _AITradeExecutor = None  # type: ignore
+    _HAS_EXECUTOR = False
 
-    class Portfolio:  # minimal fallback
-        def __init__(self, **kwargs):
-            self.total_value = 100_000.0
-            self.available_cash = 100_000.0
+
+class Portfolio(Protocol):
+    total_value: float
+    available_cash: float
 
 
 # -------------------- Enums & dataclasses --------------------
@@ -477,10 +474,10 @@ class AutonomousPortfolioManager:
         self.risk_metrics_history: List[RiskMetrics] = []
 
         self.executor_available = False
-        self.trade_executor: Optional[AITradeExecutor] = None
-        if TRADE_EXECUTOR_AVAILABLE:
+        self.trade_executor: Optional[Any] = None
+        if _HAS_EXECUTOR and _AITradeExecutor:
             try:
-                self.trade_executor = AITradeExecutor()
+                self.trade_executor = _AITradeExecutor()
                 self.executor_available = True
             except Exception as e:
                 self.logger.warning("Trade executor not available: %s", e)

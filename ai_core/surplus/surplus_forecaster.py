@@ -14,7 +14,7 @@ Why
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Sequence, SupportsFloat
 import math
 
 try:  # pragma: no cover
@@ -57,13 +57,18 @@ class SurplusForecaster:
         self.symbolic = symbolic or SymbolicEquation41()
 
     def forecast(
-        self, revenues: List[float], expenses: List[float], steps: int = 6
+        self,
+        revenues: Sequence[SupportsFloat],
+        expenses: Sequence[SupportsFloat],
+        steps: int = 6,
     ) -> SurplusForecast:
-        n = min(len(revenues), len(expenses))
+        rev_series = [float(v) for v in revenues]
+        exp_series = [float(v) for v in expenses]
+        n = min(len(rev_series), len(exp_series))
         if n == 0:
             raise ValueError("Need revenue & expense history")
-        rev = revenues[-n:]
-        exp = expenses[-n:]
+        rev = rev_series[-n:]
+        exp = exp_series[-n:]
         series = [r - e for r, e in zip(rev, exp)]
         level = series[0]
         residuals: List[float] = []

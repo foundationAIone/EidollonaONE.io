@@ -4,6 +4,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 
 ROOT = Path(__file__).parent.resolve()
 WEB = ROOT / "web_interface"
@@ -158,7 +159,7 @@ def symbolic_diagnostic():
 
 
 @app.get("/symbolic/resonance")
-def symbolic_resonance(x: float = None):
+def symbolic_resonance(x: Optional[float] = None):
     if not symbolic_equation:
         return JSONResponse({"error": "symbolic core unavailable"}, status_code=503)
     try:

@@ -24,22 +24,35 @@ from typing import Any, Dict, Optional, Tuple
 
 # v4.1 core + shared context
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from symbolic_core.se41_context import assemble_se41_context
+from symbolic_core.context_builder import assemble_se41_context
 
 # Shared trading helper (centralized; no in-file injection)
 from trading.helpers.se41_trading_gate import se41_signals, ethos_decision
 
 # Optional subsystems (kept for compatibility)
+# Provide a stable local QuantumDriver type that delegates to the external one if present,
+# avoiding cross-module type identity conflicts under static analysis.
 try:
-    from ai_core.quantum_core.quantum_driver import QuantumDriver
-
-    QUANTUM_DRIVER_AVAILABLE = True
+    from ai_core.quantum_core.quantum_driver import (
+        QuantumDriver as _ExternalQuantumDriver,
+    )  # type: ignore
+    _HAS_EXTERNAL_QD = True
 except Exception:
-    QUANTUM_DRIVER_AVAILABLE = False
+    _ExternalQuantumDriver = None  # type: ignore
+    _HAS_EXTERNAL_QD = False
 
-    class QuantumDriver:  # pragma: no cover
-        def get_quantum_state(self) -> Dict[str, float]:
-            return {"coherence": 0.9}
+
+class QuantumDriver:  # pragma: no cover
+    def __init__(self) -> None:
+        self._impl = _ExternalQuantumDriver() if _HAS_EXTERNAL_QD else None  # type: ignore[operator]
+
+    def get_quantum_state(self) -> Dict[str, float]:
+        if self._impl is not None:
+            try:
+                return self._impl.get_quantum_state()  # type: ignore[no-any-return]
+            except Exception:
+                return {"coherence": 0.9}
+        return {"coherence": 0.9}
 
 
 try:
@@ -267,7 +280,7 @@ class QuantumTradingEnhancer:
     def __init__(self) -> None:
         self.logger = logging.getLogger(f"{__name__}.QuantumTradingEnhancer")
         self.quantum_available = False
-        if QUANTUM_DRIVER_AVAILABLE:
+        if _HAS_EXTERNAL_QD:
             try:
                 self.quantum_driver = QuantumDriver()
                 self.quantum_available = True
@@ -456,9 +469,12 @@ class AITradingIntelligence:
         s = analysis.get("signal_strength", 0.0)
         strength = "Strong" if s > 0.8 else "Moderate" if s > 0.6 else "Weak"
         trend_desc = "bullish" if analysis.get("price_change", 0) > 0 else "bearish"
-        vol = analysis.get("volatility", 0.0)
-        trend = analysis.get("trend_strength", 0.0)
-        return f"{strength} {trend_desc} signal for {symbol}. Trend {trend:.2f}, Volatility {vol:.2f}."
+        vol = float(analysis.get("volatility", 0.0))
+        trend = float(analysis.get("trend_strength", 0.0))
+        return (
+            f"{strength} {trend_desc} signal for {symbol}. "
+            f"Trend {trend:.2f}, Volatility {vol:.2f}."
+        )
 
 
 # -------------------- Executor --------------------
@@ -715,7 +731,7 @@ class AITradeExecutor:
                 size = float(pos.get("size", 0))
                 side = str(pos.get("side", "long"))
 
-                unrealized = (
+                _unrealized = (
                     (price - entry) * size if side == "long" else (entry - price) * size
                 )
 
@@ -725,13 +741,13 @@ class AITradeExecutor:
                 should_exit = False
 
                 if stop and (
-                    (side == "long" and price <= stop)
-                    or (side == "short" and price >= stop)
+                    (side == "long" and price <= float(stop))
+                    or (side == "short" and price >= float(stop))
                 ):
                     should_exit, exit_reason = True, "stop_loss"
                 elif target and (
-                    (side == "long" and price >= target)
-                    or (side == "short" and price <= target)
+                    (side == "long" and price >= float(target))
+                    or (side == "short" and price <= float(target))
                 ):
                     should_exit, exit_reason = True, "target_reached"
 

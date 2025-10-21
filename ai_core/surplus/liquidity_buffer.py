@@ -14,7 +14,7 @@ Why
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional, Sequence, SupportsFloat
 import math
 
 try:  # pragma: no cover
@@ -56,11 +56,11 @@ class LiquidityBufferModel:
         self.symbolic = symbolic or SymbolicEquation41()
 
     def compute(
-        self, net_outflows: List[float], stress_multiplier: float = 2.5
+        self, net_outflows: Sequence[SupportsFloat], stress_multiplier: float = 2.5
     ) -> LiquidityBufferResult:
         if not net_outflows:
             raise ValueError("Need net outflow history (positive = outflow)")
-        vols = net_outflows[-self.days :]
+        vols = [float(v) for v in net_outflows][-self.days :]
         mean = sum(vols) / len(vols)
         var = sum((v - mean) ** 2 for v in vols) / max(1, len(vols) - 1)
         sigma = math.sqrt(var)

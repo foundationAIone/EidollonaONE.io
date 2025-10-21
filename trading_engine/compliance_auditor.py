@@ -21,7 +21,7 @@ from typing import Dict, List, Optional, Any
 
 # v4.1 core + shared context (kept for optional local evaluation)
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from symbolic_core.se41_context import assemble_se41_context
+from symbolic_core.context_builder import assemble_se41_context
 
 # Shared trading helper (centralized; no in-file helper injection)
 from trading.helpers.se41_trading_gate import se41_signals, ethos_decision
@@ -29,27 +29,32 @@ from trading.helpers.se41_trading_gate import se41_signals, ethos_decision
 # Optional: legal framework & trade components
 try:
     from legal_framework.legal_framework_engine import LegalFrameworkEngine
-
     LEGAL_FRAMEWORK_AVAILABLE = True
 except Exception:
     LEGAL_FRAMEWORK_AVAILABLE = False
+    LegalFrameworkEngine = Any  # type: ignore[assignment]
 
-try:
-    from trading_engine.ai_trade_executor import TradeType, MarketType, RiskLevel
+# Avoid cross-module enum identity conflicts by defining local enums; if external
+# ai_core.types exists, it can be mapped at runtime in adapters without affecting typing.
+class TradeType(Enum):
+    MARKET = "market"
+    BUY = "buy"
+    SELL = "sell"
+    OPTION_BUY = "option_buy"
+    OPTION_SELL = "option_sell"
 
-    TRADE_COMPONENTS_AVAILABLE = True
-except Exception:
-    # Provide lightweight fallbacks so typing of dataclass fields still works
-    class TradeType(Enum):
-        MARKET = "market"
 
-    class MarketType(Enum):
-        SPOT = "spot"
+class MarketType(Enum):
+    SPOT = "spot"
+    STOCKS = "stocks"
+    FOREX = "forex"
+    CRYPTO = "crypto"
 
-    class RiskLevel(Enum):
-        LOW = "low"
 
-    TRADE_COMPONENTS_AVAILABLE = False
+class RiskLevel(Enum):
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
 
 
 """
@@ -472,10 +477,10 @@ class ComplianceAuditor:
         self.violations: Dict[str, ComplianceViolation] = {}
         self.audit_reports: Dict[str, AuditReport] = {}
 
-        self.legal_framework = None
+        self.legal_framework: Optional[Any] = None
         if LEGAL_FRAMEWORK_AVAILABLE:
             try:
-                self.legal_framework = LegalFrameworkEngine()
+                self.legal_framework = LegalFrameworkEngine()  # type: ignore[call-arg]
             except Exception as e:
                 self.logger.warning("Legal framework not available: %s", e)
 
@@ -588,7 +593,7 @@ class ComplianceAuditor:
         report.symbolic_compliance_coherence = coh
 
         # Simple overall & risk-adjusted scores
-        total = max(1, report.total_violations)
+    # total = max(1, report.total_violations)  # not used; kept for future weighting
         severity_penalty = (
             0.1 * report.critical_violations + 0.05 * report.regulatory_violations
         )

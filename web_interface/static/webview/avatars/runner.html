@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Eidollona Avatars</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css" integrity="sha512-A1mLk2oS01qmPvvrLpzjAU6YewsGmmKzBSSMSmc5QwDFi1Cdm42Hcps225y7sY9qsut0kGugHgdGXNq35p3f0A==" crossorigin="anonymous" />
+    <style>
+      body {
+        font-family: "Inter", "Segoe UI", sans-serif;
+        background: #0f1117;
+        color: #f5f6fb;
+        margin: 0;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+      #avatar-card {
+        background: rgba(20, 26, 39, 0.85);
+        border-radius: 16px;
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: minmax(280px, 400px) minmax(280px, 1fr);
+        gap: 1.25rem;
+        box-shadow: 0 22px 48px rgba(0, 0, 0, 0.35);
+      }
+      canvas {
+        width: 100%;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      #controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      button, select {
+        background: rgba(70, 90, 255, 0.2);
+        border: 1px solid rgba(120, 120, 255, 0.4);
+        border-radius: 10px;
+        color: #f5f6fb;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background: rgba(70, 90, 255, 0.32);
+      }
+      #dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        padding: 1rem;
+      }
+      .kpi-value {
+        font-size: 1.6rem;
+        font-weight: 600;
+      }
+      #transcript {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 90px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+      }
+      #avatar-status {
+        font-size: 0.85rem;
+        opacity: 0.7;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(4, 8, 16, 0.8);
+      }
+      .modal.active { display: flex; }
+      .modal-card {
+        background: #141a27;
+        padding: 1.5rem;
+        border-radius: 16px;
+        width: min(420px, 90vw);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+      .modal-card label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+        color: #d0d4f5;
+      }
+      .modal-card input,
+      .modal-card textarea {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 0.55rem 0.75rem;
+        color: #f5f6fb;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="avatar-title">Avatar Runner</h1>
+      <div>
+        <span id="avatar-status">Loading…</span>
+      </div>
+    </header>
+
+    <section id="avatar-card">
+      <div>
+        <canvas id="avatar-canvas" aria-label="Avatar preview"></canvas>
+        <div id="controls">
+          <button data-action="explain">Explain</button>
+          <button data-action="dashboard">Refresh Dashboard</button>
+          <button data-action="upload" data-avatar="fancomp">Upload IP</button>
+          <button data-action="request" data-avatar="serveit">New Request</button>
+          <select id="action-select" aria-label="Action menu">
+            <option value="">Run Action…</option>
+            <option value="join_pool">Join Money Pool</option>
+            <option value="quote_task">Quote Task</option>
+            <option value="accept_task">Accept Task</option>
+            <option value="payout_paper">Payout Paper</option>
+          </select>
+          <button data-action="run-selected">Run</button>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h2>Dashboard</h2>
+          <div id="dashboard"></div>
+        </div>
+        <div class="card">
+          <h2>Latest Response</h2>
+          <div id="transcript">Waiting for avatar…</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="modal" id="modal-upload">
+      <div class="modal-card">
+        <h3>Upload to FanComp Vault</h3>
+        <label>
+          Title
+          <input id="upload-title" placeholder="Project title" />
+        </label>
+        <label>
+          Artist Name
+          <input id="upload-artist" placeholder="Creator name" />
+        </label>
+        <label>
+          Price (cents)
+          <input id="upload-price" type="number" value="500" />
+        </label>
+        <label>
+          Notes
+          <textarea id="upload-notes" rows="3" placeholder="Describe the work"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button data-close="modal-upload">Cancel</button>
+          <button data-submit="upload">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-request">
+      <div class="modal-card">
+        <h3>Request a Serve-it Task</h3>
+        <label>
+          Category
+          <input id="request-category" placeholder="general" />
+        </label>
+        <label>
+          Description
+          <textarea id="request-description" rows="3" placeholder="What do you need?"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button data-close="modal-request">Cancel</button>
+          <button data-submit="request">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/vrm_loader.js"></script>
+    <script type="module" src="../js/voice_lipsync.js"></script>
+    <script type="module" src="js/avatar_runner.js"></script>
+  </body>
+</html>

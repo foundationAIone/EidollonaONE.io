@@ -99,7 +99,19 @@ class VolumeAnalyzer:
         )  # assume we transacted 2% of bar volume (example)
         if len(self._bars) > self.window:
             old = self._bars.popleft()
-            # We do not remove executed/total for simplicity (session cumulative)
+            se_decay = self.symbolic.evaluate(
+                assemble_se41_context(
+                    risk_hint=_clamp01(old.volume / max(1.0, volume * 2.0)),
+                    uncertainty_hint=_clamp01(abs(old.price - self._bars[-1].price) / max(1.0, self._bars[-1].price)),
+                    coherence_hint=_clamp01(self.target_participation),
+                    extras={"decay": {"age": time.time() - old.ts}},
+                )
+            )
+            decay = _clamp01(se_decay.coherence)
+            self._total_volume = max(0.0, self._total_volume - old.volume * decay)
+            self._executed_volume = max(
+                0.0, self._executed_volume - old.volume * 0.02 * decay
+            )
 
     def simulate_random(self, n: int = 50, base_price: float = 100.0) -> None:
         p = base_price

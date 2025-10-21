@@ -1,0 +1,110 @@
+{
+  "web_interface": {
+    "type": "web",
+    "smoke": [],
+    "endpoints": [],
+    "artifacts": [
+      "web_interface/static/webview/throne_room.html",
+      "web_interface/static/webview/capstone.html"
+    ]
+  },
+  "web_planning": {
+    "type": "api",
+    "smoke": [
+      "tests/test_planning_api_smoke.py"
+    ],
+    "endpoints": [
+      "/healthz"
+    ],
+    "artifacts": []
+  },
+  "bridge": {
+    "type": "api",
+    "smoke": [],
+    "endpoints": [
+      "/healthz",
+      "/v1/status/summary"
+    ],
+    "artifacts": []
+  },
+  "sovereignty": {
+    "type": "api",
+    "smoke": [],
+    "endpoints": [
+      "/v1/sovereign/prefs"
+    ],
+    "artifacts": []
+  },
+  "security": {
+    "type": "lib",
+    "smoke": [
+      "tests/test_security_smoke.py"
+    ],
+    "endpoints": [],
+    "artifacts": []
+  },
+  "emp": {
+    "type": "api",
+    "smoke": [
+      "tests/test_emp_smoke.py"
+    ],
+    "endpoints": [],
+    "artifacts": []
+  },
+  "trading_engine": {
+    "type": "lib",
+    "smoke": [
+      "tests/test_bs_enhanced.py",
+      "tests/test_trading_slice.py"
+    ],
+    "endpoints": [],
+    "artifacts": []
+  },
+  "serplus": {
+    "type": "api",
+    "smoke": [],
+    "endpoints": [
+      "/v1/ser/state"
+    ],
+    "artifacts": [
+      "logs/serplus_ledger.ndjson"
+    ]
+  },
+  "avatar": {
+    "type": "web",
+    "smoke": [],
+    "endpoints": [],
+    "artifacts": [
+      "web_interface/static/webview/js/vrm_loader.js"
+    ]
+  },
+  "governance": {
+    "type": "api",
+    "smoke": [],
+    "endpoints": [
+      "/v1/sovereign/charter"
+    ],
+    "artifacts": []
+  },
+  "data_backups": {
+    "type": "data",
+    "smoke": [],
+    "endpoints": [],
+    "artifacts": [
+      "logs/",
+      "system_backups/"
+    ]
+  },
+  "ai_learning": {
+    "type": "lib",
+    "smoke": [
+      "tests/ai_learning/test_eval_harness.py"
+    ],
+    "endpoints": [
+      "/v1/ai_learning/status"
+    ],
+    "artifacts": [
+      "logs/ai_learning_last.json"
+    ]
+  }
+}

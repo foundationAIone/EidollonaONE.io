@@ -1,51 +1,73 @@
-{
-    "python.defaultInterpreterPath": "E:/EidollonaONE/eidollona_env/Scripts/python.exe",
-    "python.terminal.activateEnvironment": true,
-
-    // Python analysis is configured via pyrightconfig.json
-
-    // Formatter configuration (use VS Code default formatter mapping)
-    "[python]": {
-        "editor.defaultFormatter": "ms-python.python",
-        "editor.formatOnSave": true
-    },
-
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/*.pyc": true,
-        "**/*.pyo": true,
-        "**/*.pyd": true,
-        "**/*.egg-info": true,
-        "**/node_modules": true,
-        "**/.git": true,
-        "**/eidollona_env/Lib": true,
-        "**/quantum_env/Lib": true,
-        "**/build": true,
-        "**/dist": true,
-        "**/.pytest_cache": true,
-        "**/.coverage": true
-    },
-    "files.watcherExclude": {
-        "**/eidollona_env/**": true,
-        "**/quantum_env/**": true,
-        "**/__pycache__/**": true,
-        "**/node_modules/**": true,
-        "**/.git/**": true,
-        "**/build/**": true,
-        "**/dist/**": true,
-        "**/.pytest_cache/**": true
-    },
-
-    "git.ignoreLimitWarning": true,
-    "[yaml]": {
-        "editor.insertSpaces": true,
-        "editor.tabSize": 2,
-        "editor.detectIndentation": false
-    },
-    "files.trimTrailingWhitespace": true,
-    "files.encoding": "utf8",
-    // Frontend TS/JS editor validation off (Rely on build scripts when needed)
-    "javascript.validate.enable": false,
-    "typescript.validate.enable": false,
-    "python.analysis.typeCheckingMode": "standard"
+﻿{
+    "python.analysis.typeCheckingMode":  "off",
+    "python.analysis.userFileIndexingLimit":  1000,
+    "files.maxMemoryForLargeFilesMB":  256,
+    "search.exclude":  {
+                           "**/target/**":  true,
+                           "**/assets/**":  true,
+                           "**/out/**":  true,
+                           "**/env/**":  true,
+                           ".pytest_cache/**":  true,
+                           "**/.venv/**":  true,
+                           "**/quantum_env/**":  true,
+                           "**/logs/**":  true,
+                           "**/build/**":  true,
+                           "**/venv/**":  true,
+                           ".ruff_cache/**":  true,
+                           ".cache/**":  true,
+                           "**/web_interface/vendor/**":  true,
+                           "**/__pycache__/**":  true,
+                           "**/eidollona_env/**":  true,
+                           "**/.alpha_env/**":  true,
+                           ".mypy_cache/**":  true,
+                           "**/node_modules/**":  true,
+                           "**/venv_management/**":  true,
+                           "**/web_interface/frontend/**":  true,
+                           "**/dist/**":  true,
+                           "**/data/**":  true,
+                           "**/.git/**":  true
+                       },
+    "explorer.autoReveal":  false,
+    "files.watcherExclude":  {
+                                 "**/target/**":  true,
+                                 "**/assets/**":  true,
+                                 "**/out/**":  true,
+                                 "**/env/**":  true,
+                                 ".pytest_cache/**":  true,
+                                 "**/.venv/**":  true,
+                                 "**/quantum_env/**":  true,
+                                 "**/logs/**":  true,
+                                 "**/build/**":  true,
+                                 "**/venv/**":  true,
+                                 ".ruff_cache/**":  true,
+                                 ".cache/**":  true,
+                                 "**/web_interface/vendor/**":  true,
+                                 "**/__pycache__/**":  true,
+                                 "**/eidollona_env/**":  true,
+                                 "**/.alpha_env/**":  true,
+                                 ".mypy_cache/**":  true,
+                                 "**/node_modules/**":  true,
+                                 "**/venv_management/**":  true,
+                                 "**/web_interface/frontend/**":  true,
+                                 "**/dist/**":  true,
+                                 "**/data/**":  true,
+                                 "**/.git/**":  true
+                             },
+    "search.followSymlinks":  false,
+    "typescript.tsserver.experimental.enableProjectDiagnostics":  false,
+    "typescript.tsserver.maxTsServerMemory":  2048,
+    "git.autorefresh":  true,
+    "python.analysis.indexing":  false,
+    "python.defaultInterpreterPath":  "E:\\.venvs\\eidollona_env\\Scripts\\python.exe",
+    "git.enabled":  false,
+    "git.untrackedChanges":  "hidden",
+    "git.decorations.enabled":  true,
+    "git.countBadge":  "tracked",
+    "git.ignoreLimitWarning":  true,
+    "workbench.startupEditor":  "welcomePage",
+    "scm.alwaysShowProviders":  false,
+    "typescript.tsserver.enable":  true,
+    "javascript.suggest.enabled":  true,
+    "security.workspace.trust.enabled":  true,
+    "python.experiments.enabled":  false
 }

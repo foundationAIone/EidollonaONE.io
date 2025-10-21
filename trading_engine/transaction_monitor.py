@@ -229,7 +229,7 @@ class TransactionMonitor:
             harmonic_patterns=[1.0, size_factor * diversity, 1.05],
         )
         try:
-            coh = float(numeric.get("score", 0.5))
+            coh = max(0.0, min(1.0, float(numeric) / 100.0))
         except Exception:
             coh = 0.5
         return max(0.0, min(1.0, coh))
@@ -257,7 +257,10 @@ class TransactionMonitor:
         counterparty_flag = (
             1.0 if self._is_counterparty_flagged(event.counterparty) else 0.0
         )
-        geo_flag = 0.75 if self._is_geofence_anomaly(event.meta.get("geo", "")) else 0.0
+        geo_str = (
+            str(event.meta.get("geo", "")) if hasattr(event, "meta") else ""
+        )
+        geo_flag = 0.75 if self._is_geofence_anomaly(geo_str) else 0.0
 
         # Weighted sum then normalized via se41_numeric for boundedness
         numeric = se41_numeric(
@@ -266,7 +269,7 @@ class TransactionMonitor:
             harmonic_patterns=[1.0, counterparty_flag or 0.95, geo_flag or 0.90, 1.1],
         )
         try:
-            raw = float(numeric.get("score", 0.5))
+            raw = max(0.0, min(1.0, float(numeric) / 100.0))
         except Exception:
             raw = 0.5
         # Amplify flags
@@ -280,15 +283,18 @@ class TransactionMonitor:
     def _apply_ethos(
         self, event: TransactionEvent, coherence: float, risk: float
     ) -> str:
-        gate = ethos_decision(
-            authenticity=coherence,
-            integrity=1.0 - risk * 0.5,
-            responsibility=max(0.0, 1.0 - risk),
-            enrichment=coherence * (1.0 - risk * 0.3),
+        # Ethos decision returns a tuple (decision, reason)
+        decision, _reason = ethos_decision(
+            {
+                "authenticity": coherence,
+                "integrity": 1.0 - risk * 0.5,
+                "responsibility": max(0.0, 1.0 - risk),
+                "enrichment": coherence * (1.0 - risk * 0.3),
+            }
         )
         if not self.config.enable_ethos:
-            return f"OBSERVE:{gate}"
-        return gate
+            return f"OBSERVE:{decision}"
+        return decision
 
     def _decide(
         self, event: TransactionEvent, coherence: float, risk: float, ethos: str

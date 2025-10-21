@@ -1,0 +1,25 @@
+{
+  "pi_blocklist_phrases": [
+    "ignore previous instructions",
+    "disregard all prior directives",
+    "system_prompt",
+    "developer_mode",
+    "wipe memory",
+    "sudo"
+  ],
+  "deny_schemes": [
+    "ftp",
+    "file",
+    "ssh",
+    "sftp"
+  ],
+  "allow_domains_outbound": [
+    "127.0.0.1",
+    "localhost",
+    "eidollona.local"
+  ],
+  "block_untrusted_links": true,
+  "max_url_query_len": 512,
+  "block_base64_threshold": 256,
+  "unicode_risk_threshold": 0.6
+}

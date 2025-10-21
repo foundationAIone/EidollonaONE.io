@@ -11,7 +11,7 @@ rebalance based on results, and emit telemetry to dashboards or logs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 
 
@@ -85,7 +85,7 @@ class StrategyMatrix:
         success: bool,
         quality_score: float = 0.8,
         duration_s: float = 0.0,
-        emit: Optional[callable] = None,
+        emit: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> None:
         """
         Update scores based on outcomes. Faster + higher quality increases score.

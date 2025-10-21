@@ -22,15 +22,14 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, cast
 
 # --- SE41 core --------------------------------------------------------------
 from symbolic_core.symbolic_equation41 import SymbolicEquation41, SE41Signals  # type: ignore
-from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+from symbolic_core.context_builder import assemble_se41_context  # type: ignore
 from trading.helpers.se41_trading_gate import (
     se41_signals,  # -> SE41Signals payload builder
     ethos_decision,  # -> {decision: allow/hold/deny, pillars...}
-    se41_numeric,  # -> bounded numeric synthesis (sanity-bounded)
 )
 
 # --- Optional subsystems (soft deps; facade will degrade gracefully) --------
@@ -109,10 +108,11 @@ class TradingEngine:
         self.cfg = config or EngineConfig()
         self._se41 = SymbolicEquation41()
         # Optional subsystems (soft dependencies)
-        self._ai = AITradeExecutor() if _EXECUTOR_AVAILABLE else None
-        self._exec = TradeExecutionEngine() if _EXEC_ENGINE_AVAILABLE else None
-        self._pos = PositionManager() if _POS_MANAGER_AVAILABLE else None
-        self._pnl = PnLCalculator() if _PNL_AVAILABLE else None
+        # These soft deps may be None; ignore type checkers for callable usage
+        self._ai = AITradeExecutor() if _EXECUTOR_AVAILABLE else None  # type: ignore[operator]
+        self._exec = TradeExecutionEngine() if _EXEC_ENGINE_AVAILABLE else None  # type: ignore[operator]
+        self._pos = PositionManager() if _POS_MANAGER_AVAILABLE else None  # type: ignore[operator]
+        self._pnl = PnLCalculator() if _PNL_AVAILABLE else None  # type: ignore[operator]
         self._armed_live = not self.cfg.paper_trading
         self._last_status: Dict[str, Any] = {}
         self.log.info(
@@ -143,9 +143,9 @@ class TradingEngine:
         ]
         for s in symbols:
             try:
-                result = self._ai.ai_intelligence.generate_trading_signal(
+                result = self._ai.ai_intelligence.generate_trading_signal(  # type: ignore[union-attr]
                     symbol=s,
-                    market_type=getattr(self._ai, "MarketType", None) or "stocks",
+                    market_type=cast(Any, getattr(self._ai, "MarketType", None) or "stocks"),
                     market_data={"current_price": 100.0},
                 )
             except Exception:
@@ -160,26 +160,30 @@ class TradingEngine:
         entry = float(raw_signal.get("entry_price", raw_signal.get("price", 100.0)))
         size = float(raw_signal.get("position_size", 1000.0))
         ctx = assemble_se41_context(
-            perception={"symbol": symbol, "trade_type": trade_type},
-            memory={"recent_win_rate": raw_signal.get("win_rate", 0.5)},
-            intent={"size": size, "entry": entry},
-            mirror={"consistency": raw_signal.get("symbolic_validation", 0.7)},
-            substrate={"S_EM": 0.83},
-            extra={"volatility": raw_signal.get("volatility", 0.2)},
+            coherence_hint=float(raw_signal.get("symbolic_validation", 0.7)),
+            risk_hint=0.2,
+            uncertainty_hint=0.2,
+            mirror_consistency=float(raw_signal.get("symbolic_validation", 0.7)),
+            s_em=0.83,
         )
         s: SE41Signals = self._se41.evaluate(ctx)  # type: ignore
-        sig = se41_signals(
-            {
-                "coherence": s.coherence,
-                "risk": max(0.0, min(s.risk, 1.0)),
-                "impetus": max(0.0, min(s.impetus, 1.0)),
-                "ethos": s.ethos,
-                "explain": f"symbol={symbol} trade={trade_type}",
-            }
-        )
-        gate = (
+        sig_input: Dict[str, Any] = {
+            "coherence": s.coherence,
+            "risk": max(0.0, min(s.risk, 1.0)),
+            "impetus": max(0.0, min(s.impetus, 1.0)),
+            "ethos": s.ethos,
+            "explain": f"symbol={symbol} trade={trade_type}",
+        }
+        sig = se41_signals(sig_input) or sig_input
+        gate_raw = (
             ethos_decision(sig) if self.cfg.enable_ethos_gate else {"decision": "allow"}
         )
+        # Normalize ethos_decision which may return tuple(decision, reason)
+        if isinstance(gate_raw, tuple):
+            decision, reason = gate_raw
+            gate: Dict[str, Any] = {"decision": decision, "reason": reason}
+        else:
+            gate = cast(Dict[str, Any], gate_raw)
         decision = gate.get("decision", "hold")
         proceed = (
             decision in ("allow", "approve", "permit")
@@ -318,10 +322,10 @@ class TradingEngine:
             return TradingSignal(  # type: ignore
                 signal_id=scored.signal_id,
                 symbol=scored.symbol,
-                market_type=getattr(self._ai, "MarketType", None) or "stocks",
-                trade_type=scored.trade_type,
+                market_type=cast(Any, getattr(self._ai, "MarketType", None) or "stocks"),
+                trade_type=cast(Any, scored.trade_type),
                 confidence=0.75,
-                risk_level=getattr(self._ai, "RiskLevel", None) or "moderate",
+                risk_level=cast(Any, getattr(self._ai, "RiskLevel", None) or "moderate"),
                 entry_price=scored.entry_price,
                 target_price=scored.entry_price,
                 stop_loss=scored.entry_price * 0.97,

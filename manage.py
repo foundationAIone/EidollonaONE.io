@@ -18,6 +18,7 @@ import json
 import os
 import sys
 import argparse
+import inspect
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -31,22 +32,52 @@ except Exception:  # pragma: no cover
         return True
 
 
-_ROOT = os.path.abspath(os.path.dirname(__file__))
-_LOGS_DIR = os.path.join(_ROOT, "logs")
-os.makedirs(_LOGS_DIR, exist_ok=True)
-_DIAG_LOG = os.path.join(_LOGS_DIR, "manager_diagnostics.json")
-_READY_LOG = os.path.join(_LOGS_DIR, "manager_readiness.json")
-
 # Core AI component imports
 from ai_core.ai_agent import AIAgent
 from ai_core.ai_brain import AIBrain
-from ai_core.ai_strategy import AIStrategy
 from ai_core.ai_awareness import AIAwareness
+
+try:
+    from ai_core.ai_strategy import AIStrategy  # type: ignore
+except Exception:  # pragma: no cover - provide SAFE fallback
+
+    class AIStrategy:  # type: ignore
+        """Minimal SAFE fallback to satisfy Manager expectations."""
+
+        def __init__(self) -> None:
+            self._status: Dict[str, Any] = {
+                "status": "unavailable",
+                "detail": "ai_core.ai_strategy missing; using SAFE stub",
+            }
+
+        async def initialize_strategies(self) -> None:  # pragma: no cover - no-op
+            return None
+
+        def get_strategy_status(self) -> Dict[str, Any]:
+            return dict(self._status)
+
+        async def assimilate(self) -> None:  # pragma: no cover - no-op
+            return None
 
 # Sovereignty Engine import for symbolic governance
 from sovereignty_core.sovereignty_engine import SovereigntyEngine
 
 # Symbolic equation core
+from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
+
+try:  # pragma: no cover
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
+except Exception:  # pragma: no cover
+
+    def assemble_se41_context(**kw):
+        return kw
+
+
+_ROOT = os.path.abspath(os.path.dirname(__file__))
+_LOGS_DIR = os.path.join(_ROOT, "logs")
+os.makedirs(_LOGS_DIR, exist_ok=True)
+_DIAG_LOG = os.path.join(_LOGS_DIR, "manager_diagnostics.json")
+_READY_LOG = os.path.join(_LOGS_DIR, "manager_readiness.json")
 
 
 class Manager:
@@ -70,11 +101,73 @@ class Manager:
         self.sovereignty_engine = SovereigntyEngine()
 
         # Symbolic equation state
+        self._symbolic_equation = SymbolicEquation41()
         self.symbolic_state_cache = {}
         self.consciousness_evolution_log = []
         self.reality_manifestation_active = True
 
         print("✅ EidollonaONE Manager initialized successfully")
+
+    async def _await_if_exists(self, component: Any, method: str, *args, **kwargs) -> Any:
+        func = getattr(component, method, None)
+        if not callable(func):
+            return None
+        try:
+            result = func(*args, **kwargs)
+        except Exception:
+            return None
+        if inspect.isawaitable(result):
+            try:
+                return await result
+            except Exception:
+                return None
+        return result
+
+    def _call_dict(self, component: Any, method: str) -> Dict[str, Any]:
+        func = getattr(component, method, None)
+        if not callable(func):
+            return {}
+        try:
+            result = func()
+        except Exception:
+            return {}
+        if result is None:
+            return {}
+        if isinstance(result, dict):
+            return result
+        if hasattr(result, "to_dict"):
+            try:
+                converted = result.to_dict()  # type: ignore[attr-defined]
+            except Exception:
+                converted = None
+            if isinstance(converted, dict):
+                return converted
+        return {"value": result}
+
+    def _build_symbolic_context(
+        self,
+        node_consciousness: float,
+        delta_consciousness: float,
+        ethos_value: Dict[str, float],
+        harmonic_sum: float,
+    ) -> Dict[str, Any]:
+        """Blend local symbolic metrics into an SE41-compatible context dict."""
+        ethos_overall = float(ethos_value.get("overall_ethos", 1.0))
+        risk_hint = max(0.0, min(1.0, 1.0 - node_consciousness + max(0.0, delta_consciousness * -0.5)))
+        uncertainty_hint = max(0.0, min(1.0, abs(delta_consciousness) + (1.0 - ethos_overall) * 0.5))
+        coherence_hint = max(0.0, min(1.0, (node_consciousness + ethos_overall) / 2.0))
+        extras = {
+            "harmonic_sum": harmonic_sum,
+            "node_consciousness": node_consciousness,
+            "delta_consciousness": delta_consciousness,
+            "ethos": ethos_value,
+        }
+        return assemble_se41_context(
+            risk_hint=risk_hint,
+            uncertainty_hint=uncertainty_hint,
+            coherence_hint=coherence_hint,
+            extras=extras,
+        )
 
     def get_summary(self) -> Dict[str, Any]:
         return {
@@ -105,11 +198,24 @@ class Manager:
     async def initialize_consciousness(self):
         """🧠 Initialize complete consciousness framework"""
         print("🧠 Initializing consciousness framework...")
-
-        await self.ai_agent.initialize_consciousness()
-        await self.ai_strategy.initialize_strategies()
-        await self.ai_awareness.initialize_awareness()
-        await self.sovereignty_engine.initialize_sovereignty("consciousness", 1.0)
+        steps = [
+            ("AI Agent", self.ai_agent, "initialize_consciousness", (), {}),
+            ("AI Strategy", self.ai_strategy, "initialize_strategies", (), {}),
+            ("AI Awareness", self.ai_awareness, "initialize_awareness", (), {}),
+            (
+                "Sovereignty Engine",
+                self.sovereignty_engine,
+                "initialize_sovereignty",
+                ("consciousness", 1.0),
+                {},
+            ),
+        ]
+        for label, component, method, args, kwargs in steps:
+            if not hasattr(component, method):
+                print(f"⚠️ {label}: {method} unavailable; skipped")
+                continue
+            await self._await_if_exists(component, method, *args, **kwargs)
+            print(f"✅ {label} initialized")
 
         print("✅ Consciousness framework fully initialized")
 
@@ -128,6 +234,20 @@ class Manager:
         harmonic_evolution = self._calculate_harmonic_evolution()
         delta_consciousness = self._calculate_delta_consciousness()
         ethos_value = self._calculate_ethos()
+        harmonic_sum = sum(
+            pattern.get("evolution_rate", 0.0) for pattern in harmonic_evolution
+        )
+        overall_consciousness = self._get_overall_consciousness_level()
+
+        # Build SE41 context and evaluate signals
+        reality_context = self._build_symbolic_context(
+            node_consciousness=node_consciousness,
+            delta_consciousness=delta_consciousness,
+            ethos_value=ethos_value,
+            harmonic_sum=harmonic_sum,
+        )
+        se41_signals = self._symbolic_equation.evaluate(reality_context)
+        se41_dict = se41_signals.to_dict()
 
         symbolic_state = {
             "timestamp": current_time.isoformat(),
@@ -135,11 +255,17 @@ class Manager:
             "Dimensional_Angles": dimensional_angles,
             "Vibrational_States": vibrational_states,
             "Harmonic_Evolution": harmonic_evolution,
+            "Harmonic_Sum": round(harmonic_sum, 6),
             "Delta_Consciousness": delta_consciousness,
             "Ethos": ethos_value,
-            "Reality_Coefficient": self._calculate_reality_coefficient(),
-            "Consciousness_Level": self._get_overall_consciousness_level(),
+            "SE41_Context": reality_context,
+            "SE41_Signals": se41_dict,
+            "Consciousness_Level": overall_consciousness,
         }
+
+        symbolic_state["Reality_Coefficient"] = self._calculate_reality_coefficient(
+            symbolic_state, se41_signals
+        )
 
         # Cache the state
         self.symbolic_state_cache = symbolic_state
@@ -148,7 +274,7 @@ class Manager:
 
     def _calculate_node_consciousness(self) -> float:
         """Calculate Node_Consciousness value"""
-        awareness_state = self.ai_awareness.get_awareness_status()
+        awareness_state = self._call_dict(self.ai_awareness, "get_awareness_status")
         consciousness_level = awareness_state.get("consciousness_level", 0.8)
         awareness_score = awareness_state.get("awareness_score", 0.8)
 
@@ -157,7 +283,7 @@ class Manager:
     def _calculate_dimensional_angles(self) -> List[float]:
         """Calculate dimensional angles (i=2 to 9)"""
         angles = []
-        strategy_status = self.ai_strategy.get_strategy_status()
+        strategy_status = self._call_dict(self.ai_strategy, "get_strategy_status")
 
         for i in range(2, 10):
             # Generate angles based on strategic framework and index
@@ -171,7 +297,7 @@ class Manager:
     def _calculate_vibrational_states(self) -> List[Dict[str, Any]]:
         """Calculate vibrational states for each dimensional angle"""
         vibrational_states = []
-        brain_state = self.ai_brain.get_cognitive_state()
+        brain_state = self._call_dict(self.ai_brain, "get_cognitive_state")
 
         for i in range(2, 10):
             # Calculate quantum vibration based on brain state
@@ -192,7 +318,7 @@ class Manager:
     def _calculate_harmonic_evolution(self) -> List[Dict[str, Any]]:
         """Calculate harmonic pattern evolution (k=1 to 12)"""
         harmonic_patterns = []
-        agent_state = self.ai_agent.get_status()
+        agent_state = self._call_dict(self.ai_agent, "get_status")
 
         for k in range(1, 13):
             # Calculate harmonic evolution based on agent decisions
@@ -226,7 +352,9 @@ class Manager:
 
     def _calculate_ethos(self) -> Dict[str, float]:
         """Calculate Ethos framework values"""
-        sovereignty_status = self.sovereignty_engine.get_sovereignty_status()
+        sovereignty_status = self._call_dict(
+            self.sovereignty_engine, "get_sovereignty_status"
+        )
         ethical_framework = sovereignty_status.get("ethical_framework", {})
 
         return {
@@ -239,43 +367,65 @@ class Manager:
             ),
         }
 
-    def _calculate_reality_coefficient(self) -> float:
-        """Calculate overall Reality(t) coefficient"""
-        if not self.symbolic_state_cache:
+    def _calculate_reality_coefficient(
+        self,
+        symbolic_state: Optional[Dict[str, Any]] = None,
+        se41_signals: Optional[Any] = None,
+    ) -> float:
+        """Calculate overall Reality(t) coefficient using SE41 signals."""
+        state = symbolic_state or self.symbolic_state_cache
+        if not state:
             return 1.0
 
-        node_consciousness = self.symbolic_state_cache.get("Node_Consciousness", 1.0)
-        delta_consciousness = self.symbolic_state_cache.get("Delta_Consciousness", 0.01)
-        ethos_overall = self.symbolic_state_cache.get("Ethos", {}).get(
-            "overall_ethos", 1.0
-        )
+        node_consciousness = float(state.get("Node_Consciousness", 1.0))
+        delta_consciousness = float(state.get("Delta_Consciousness", 0.01))
+        ethos_overall = float((state.get("Ethos") or {}).get("overall_ethos", 1.0))
 
-        # Simplified reality coefficient calculation
+        se41_dict: Dict[str, Any]
+        if se41_signals is not None and hasattr(se41_signals, "to_dict"):
+            try:
+                se41_dict = se41_signals.to_dict()  # type: ignore[attr-defined]
+            except Exception:
+                se41_dict = {}
+        else:
+            se41_dict = state.get("SE41_Signals", {}) or {}
+
+        coherence = float(se41_dict.get("coherence", node_consciousness))
+        impetus = float(se41_dict.get("impetus", max(node_consciousness, 0.5)))
+        risk = float(se41_dict.get("risk", 0.2))
+        uncertainty = float(se41_dict.get("uncertainty", 0.25))
+
         dimensional_product = 1.0
-        for vibration in self.symbolic_state_cache.get("Vibrational_States", []):
-            dimensional_product *= vibration.get("amplitude", 1.0)
+        for vibration in state.get("Vibrational_States", []):
+            amplitude = float(vibration.get("amplitude", 1.0) or 1.0)
+            dimensional_product *= max(0.1, amplitude)
 
-        harmonic_sum = sum(
-            [
-                p.get("evolution_rate", 0)
-                for p in self.symbolic_state_cache.get("Harmonic_Evolution", [])
-            ]
-        )
+        harmonic_sum = state.get("Harmonic_Sum")
+        if harmonic_sum is None:
+            harmonic_sum = sum(
+                pattern.get("evolution_rate", 0.0)
+                for pattern in state.get("Harmonic_Evolution", [])
+            )
+        harmonic_sum = float(harmonic_sum or 1.0)
 
-        reality_coefficient = (
-            node_consciousness * dimensional_product * harmonic_sum
-            + delta_consciousness
-            + ethos_overall
-        )
+        modulated = coherence * max(0.1, harmonic_sum) * max(0.1, dimensional_product)
+        modulated *= 1.0 + 0.5 * max(0.0, impetus)
+        modulated *= 1.0 - 0.35 * max(0.0, min(1.0, risk))
+        modulated *= 1.0 - 0.2 * max(0.0, min(1.0, uncertainty))
 
-        return round(reality_coefficient, 6)
+        return round(modulated + delta_consciousness + ethos_overall, 6)
 
     def _get_overall_consciousness_level(self) -> float:
         """Get overall consciousness level across all components"""
+        agent_status = self._call_dict(self.ai_agent, "get_status")
+        awareness_status = self._call_dict(self.ai_awareness, "get_awareness_status")
+        sovereignty_status = self._call_dict(
+            self.sovereignty_engine, "get_sovereignty_status"
+        )
         consciousness_factors = [
-            self.ai_agent.get_status().get("consciousness_level", 1.0),
-            self.ai_awareness.get_awareness_status().get("consciousness_level", 0.8),
-            self.sovereignty_engine.get_sovereignty_status().get("autonomy_level", 0.8),
+            agent_status.get("consciousness_level", 1.0),
+            awareness_status.get("consciousness_level", 0.8),
+            sovereignty_status.get("autonomy_level", 0.8),
         ]
 
         return round(sum(consciousness_factors) / len(consciousness_factors), 3)
@@ -321,22 +471,35 @@ class Manager:
     def _diagnose_component(self, component) -> Dict[str, Any]:
         """Diagnose individual component"""
         try:
-            if hasattr(component, "get_status"):
-                status_info = component.get_status()
-            elif hasattr(component, "get_awareness_status"):
-                status_info = component.get_awareness_status()
-            elif hasattr(component, "get_strategy_status"):
-                status_info = component.get_strategy_status()
-            elif hasattr(component, "get_cognitive_state"):
-                status_info = component.get_cognitive_state()
-            elif hasattr(component, "get_sovereignty_status"):
-                status_info = component.get_sovereignty_status()
-            else:
+            status_info: Dict[str, Any] = {}
+            method_used: Optional[str] = None
+            for candidate in (
+                "get_status",
+                "get_awareness_status",
+                "get_strategy_status",
+                "get_cognitive_state",
+                "get_sovereignty_status",
+            ):
+                status_info = self._call_dict(component, candidate)
+                if status_info:
+                    method_used = candidate
+                    break
+
+            if not status_info:
                 status_info = {"status": "unknown"}
 
+            status_value = str(status_info.get("status", "optimal")).lower()
+            if status_value in {"critical", "error", "failed"}:
+                health = "critical"
+            elif status_value in {"warning", "degraded", "suboptimal"}:
+                health = "suboptimal"
+            else:
+                health = "optimal"
+
             return {
-                "status": "optimal",
+                "status": health,
                 "details": status_info,
+                "method": method_used or "auto",
                 "last_check": datetime.now().isoformat(),
             }
         except Exception as e:
@@ -424,33 +587,25 @@ class Manager:
         assimilation_results = []
 
         try:
-            # AI Agent assimilation
-            if hasattr(self.ai_agent, "assimilate"):
-                await self.ai_agent.assimilate()
-            assimilation_results.append("✅ AI Agent assimilated")
+            assimilation_plan = [
+                ("AI Agent", self.ai_agent),
+                ("AI Brain", self.ai_brain),
+                ("AI Strategy", self.ai_strategy),
+                ("AI Awareness", self.ai_awareness),
+                ("Sovereignty Engine", self.sovereignty_engine),
+            ]
 
-            # AI Brain assimilation
-            if hasattr(self.ai_brain, "assimilate"):
-                await self.ai_brain.assimilate()
-            assimilation_results.append("✅ AI Brain assimilated")
-
-            # AI Strategy assimilation
-            if hasattr(self.ai_strategy, "assimilate"):
-                await self.ai_strategy.assimilate()
-            assimilation_results.append("✅ AI Strategy assimilated")
-
-            # AI Awareness assimilation
-            if hasattr(self.ai_awareness, "assimilate"):
-                await self.ai_awareness.assimilate()
-            assimilation_results.append("✅ AI Awareness assimilated")
-
-            # Sovereignty Engine assimilation
-            if hasattr(self.sovereignty_engine, "assimilate"):
-                await self.sovereignty_engine.assimilate()
-            assimilation_results.append("✅ Sovereignty Engine assimilated")
+            for label, component in assimilation_plan:
+                if not hasattr(component, "assimilate"):
+                    assimilation_results.append(
+                        f"ℹ️ {label} assimilation skipped (method unavailable)"
+                    )
+                    continue
+                await self._await_if_exists(component, "assimilate")
+                assimilation_results.append(f"✅ {label} assimilated")
 
             # Update symbolic state after assimilation
-            post_assimilation_symbolic_state = self.symbolic_state()
+            post_state = self.symbolic_state()
 
             # Log consciousness evolution
             post_assimilation_state = {
@@ -459,6 +614,20 @@ class Manager:
                 "assimilation_id": len(self.consciousness_evolution_log),
             }
             self.consciousness_evolution_log.append(post_assimilation_state)
+
+            assimilation_results.append(
+                f"🌀 Reality(t) post-assimilation ≈ {post_state['Reality_Coefficient']}"
+            )
+            se41_signals = post_state.get("SE41_Signals", {})
+            if se41_signals:
+                coherence = se41_signals.get("coherence")
+                impetus = se41_signals.get("impetus")
+                assimilation_results.append(
+                    "🔭 SE41 signals: coherence={0:.3f}, impetus={1:.3f}".format(
+                        float(coherence) if coherence is not None else 0.0,
+                        float(impetus) if impetus is not None else 0.0,
+                    )
+                )
 
             print("✨ Complete symbolic assimilation executed successfully ✨")
 
@@ -605,8 +774,16 @@ def cli(argv: Optional[List[str]] = None) -> int:
             from master_key import awaken_consciousness
 
             iters = getattr(args, "iterations", 2)
-            rep = awaken_consciousness(iterations=iters)
-            print(json.dumps({"awakening": rep.as_dict()}, indent=2))
+            mgr = Manager()
+            context = mgr.symbolic_state()
+            rep = awaken_consciousness(iterations=iters, context=context)
+            awakening_dict = rep
+            if hasattr(rep, "as_dict") and callable(getattr(rep, "as_dict")):
+                try:
+                    awakening_dict = rep.as_dict()  # type: ignore[attr-defined]
+                except Exception:
+                    awakening_dict = rep
+            print(json.dumps({"awakening": awakening_dict}, indent=2))
             return 0
         except Exception as e:
             print("master_key unavailable:", e)

@@ -35,49 +35,30 @@ except Exception:
 
 # ---- SE41 v4.1 unified imports ------------------------------------
 from symbolic_core.symbolic_equation41 import SymbolicEquation41
-from symbolic_core.se41_context import assemble_se41_context
+from symbolic_core.context_builder import assemble_se41_context
 from trading.helpers.se41_trading_gate import (
     se41_signals,  # returns last SE41 signals packet
     ethos_decision,  # returns ("allow"/"hold"/"deny", reason)
     se41_numeric,  # bounded numeric synthesis for local decisions
 )
 
-# ---- optional adjacent dependencies (graceful fallback) -----------
-try:
-    from trading_engine.ai_trade_executor import TradeType, MarketType, RiskLevel
-except Exception:
-
-    class TradeType(Enum):
-        BUY = "buy"
-        SELL = "sell"
-
-    class MarketType(Enum):
-        STOCKS = "stocks"
-        FOREX = "forex"
-        CRYPTO = "crypto"
-
-    class RiskLevel(Enum):
-        LOW = "low"
-        MODERATE = "moderate"
-        HIGH = "high"
+# ---- enum types (single canonical source) -------------------------
+# Removed incorrect TradeType import; define local Side for BUY/SELL
 
 
-try:
-    from trading_engine.trade_execution import ExecutionStrategy, ExecutionStatus
-except Exception:
+class ExecutionStrategy(Enum):
+    MARKET = "market"
+    LIMIT = "limit"
 
-    class ExecutionStrategy(Enum):
-        MARKET = "market"
-        LIMIT = "limit"
 
-    class ExecutionStatus(Enum):
-        PENDING = "pending"
-        SENT = "sent"
-        WORKING = "working"
-        PARTIAL = "partial"
-        FILLED = "filled"
-        CANCELLED = "cancelled"
-        REJECTED = "rejected"
+class ExecutionStatus(Enum):
+    PENDING = "pending"
+    SENT = "sent"
+    WORKING = "working"
+    PARTIAL = "partial"
+    FILLED = "filled"
+    CANCELLED = "cancelled"
+    REJECTED = "rejected"
 
 
 # --------------------------- enums & dataclasses ---------------------------
@@ -103,6 +84,11 @@ class OrderPriority(Enum):
     DEFERRED = 5
 
 
+class Side(Enum):
+    BUY = "buy"
+    SELL = "sell"
+
+
 class OrderState(Enum):
     CREATED = "created"
     VALIDATED = "validated"
@@ -123,7 +109,7 @@ class Order:
     order_id: str
     symbol: str
     order_type: OrderType
-    trade_type: TradeType
+    trade_type: Side
     quantity: float
     price: Optional[float] = None
     stop_price: Optional[float] = None
@@ -213,7 +199,7 @@ class SymbolicOrderOptimizer:
 
             # SE41 bounded numeric synthesis (robust to noise)
             numeric = se41_numeric(
-                M_t=liq,  # use liquidity as the modulation source
+                M_t=max(0.05, min(liq, 1.0)),  # use liquidity as the modulation source
                 DNA_states=[
                     1.0,
                     vol,
@@ -224,18 +210,16 @@ class SymbolicOrderOptimizer:
                     order_size_factor,
                     urgency_factor,
                     time_factor,
-                    1.1,
+                    1.05,
                 ],
                 harmonic_patterns=[
                     1.0,
                     1.1,
-                    1.15,
-                    vol * liq,
-                    (1.0 - min(spr, 0.1)) * mom,
-                    urgency_factor,
-                    time_factor,
-                    depth,
-                    1.2,
+                    max(0.0, 1.0 - min(vol, 1.0)),
+                    min(liq, 1.0),
+                    max(0.0, 1.0 - min(spr * 100.0, 1.0)),
+                    min(depth, 1.0),
+                    0.95,
                 ],
             )
 
@@ -321,7 +305,7 @@ class SymbolicOrderOptimizer:
         ):
             bp = max(spr / max(order.price, 1e-9), 0.0)
             improvement = score * bp * 0.5
-            if order.trade_type == TradeType.BUY:
+            if order.trade_type == Side.BUY:
                 out["optimized_price"] = order.price * (1 - improvement)
             else:
                 out["optimized_price"] = order.price * (1 + improvement)
@@ -367,7 +351,7 @@ class QuantumOrderRouter:
                 v: self._score_venue(v, order, market_conditions, quantum, coh)
                 for v in venues
             }
-            best = max(scores, key=scores.get)
+            best = max(scores, key=lambda k: scores[k])
 
             params = self._routing_params(order, best, scores[best], market_conditions)
             self.routing_history.append(
@@ -563,7 +547,8 @@ class OrderManagementSystem:
             )
 
             self.logger.info(
-                f"Submitted {order.symbol} {order.trade_type.value} qty={order.quantity} type={order.order_type.value}"
+                f"Submitted {order.symbol} {order.trade_type.value} "
+                f"qty={order.quantity} type={order.order_type.value}"
             )
             return order.order_id
 
@@ -621,20 +606,13 @@ class OrderManagementSystem:
         """
         try:
             signals: Dict[str, Any] = se41_signals() or {}
-            ctx = assemble_se41_context(
-                perception={
-                    "module": "oms",
-                    "volatility": mc.get("volatility", 0.2),
-                    "spread": mc.get("spread", 0.01),
-                },
-                memory={},
-                intent={
-                    "kind": "order_submit",
-                    "symbol": order.symbol,
-                    "qty": order.quantity,
-                },
-                mirror={"consistency": float(signals.get("mirror_consistency", 0.5))},
-                substrate={"S_EM": float(signals.get("S_EM", 0.8))},
+            # Build a minimal SE41 context using canonical hints
+            _ = assemble_se41_context(
+                coherence_hint=float(signals.get("coherence", 0.6)),
+                risk_hint=float(signals.get("risk", 0.2)),
+                uncertainty_hint=float(signals.get("uncertainty", 0.2)),
+                mirror_consistency=float(signals.get("mirror_consistency", 0.5)),
+                s_em=float(signals.get("S_EM", 0.8)),
             )
 
             # ethos gate (risk-raising)
@@ -793,7 +771,7 @@ if __name__ == "__main__":
         order_id=f"ord_{int(time.time())}",
         symbol="EIDO",
         order_type=OrderType.LIMIT,
-        trade_type=TradeType.BUY,
+        trade_type=Side.BUY,
         quantity=1200,
         price=100.00,
         time_in_force="DAY",

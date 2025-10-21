@@ -1,0 +1,11 @@
+{
+  "dataset_path": "ai_learning/eval/data/sample_eval_dataset.jsonl",
+  "baseline_model": "echo_baseline",
+  "metrics": [
+    "exact_match",
+    "token_f1",
+    "keyword_recall"
+  ],
+  "thresholds_path": "ai_learning/eval/config/default_thresholds.json",
+  "output_dir": "outputs/ai_learning_eval"
+}

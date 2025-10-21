@@ -265,15 +265,25 @@ def implied_volatility(
 
     if model == "bs":
         bnd = _bs_bounds(S, K, T, r, q, option)
-        price_fn = lambda sig: core_bs_price(S, K, T, r, q, sig, option)
-        vega_fn = lambda sig: core_bs_vega(S, K, T, r, q, sig)
+
+        def price_fn(sig: float) -> float:
+            return core_bs_price(S, K, T, r, q, sig, option)
+
+        def vega_fn(sig: float) -> float:
+            return core_bs_vega(S, K, T, r, q, sig)
+
         sigma0 = _bs_initial_guess(price, S, K, T, r, q, option)
     else:  # black76 path: treat S as F
         DF = math.exp(-r * T)
         F = S
         bnd = _black76_bounds(F, K, T, r, option)
-        price_fn = lambda sig: core_black76_price(F, K, T, r, 0.0, sig, option)
-        vega_fn = lambda sig: core_black76_vega(F, K, T, r, 0.0, sig)
+
+        def price_fn(sig: float) -> float:
+            return core_black76_price(F, K, T, r, 0.0, sig, option)
+
+        def vega_fn(sig: float) -> float:
+            return core_black76_vega(F, K, T, r, 0.0, sig)
+
         Sd, X = DF * F, DF * K
         A = price - 0.5 * (Sd - X)
         inside = A * A + (Sd - X) ** 2 / math.pi
@@ -283,9 +293,13 @@ def implied_volatility(
         sigma0 = max(sigma0 / math.sqrt(T), 1e-9)
 
     if price < bnd.lower - 1e-12 or price > bnd.upper + 1e-12:
-        raise ValueError(
-            f"Observed price {price:.6g} is outside no‑arbitrage bounds [{bnd.lower:.6g}, {bnd.upper:.6g}] for {option}."
+        msg = (
+            "Observed price "
+            f"{price:.6g}"
+            " is outside no-arbitrage bounds "
+            f"[{bnd.lower:.6g}, {bnd.upper:.6g}] for {option}."
         )
+        raise ValueError(msg)
     if _is_close(price, bnd.lower, atol=1e-12):
         res = IVResult(
             sigma=0.0,
@@ -305,7 +319,8 @@ def implied_volatility(
         )
         return res if return_full else res.sigma
 
-    f = lambda sig: price_fn(sig) - price
+    def residual(sig: float) -> float:
+        return price_fn(sig) - price
 
     method_used = method
     converged = False
@@ -314,7 +329,8 @@ def implied_volatility(
 
     # Optional alignment hint
     align = se41_numeric(
-        M_t=0.5, DNA_states=[1.0, min(max(sigma0, 0.0), 1.0), 1.0, 1.11]
+        M_t=0.5,
+        DNA_states=[1.0, min(max(sigma0, 0.0), 1.0), 1.0, 1.11],
     )
     try:
         if isinstance(align, dict):
@@ -325,16 +341,33 @@ def implied_volatility(
 
     if method == "newton":
         sigma, converged, iters = _solve_newton(
-            f, vega_fn, sigma0, (lo, hi), tol=tol, max_iter=max_iter
+            residual,
+            vega_fn,
+            sigma0,
+            (lo, hi),
+            tol=tol,
+            max_iter=max_iter,
         )
         if not converged:
             method_used = "brent_fallback"
-            a, b = _bracket(f, lo, hi)
-            sigma, converged, it_b = _solve_brent(f, a, b, tol=tol, max_iter=max_iter)
+            a, b = _bracket(residual, lo, hi)
+            sigma, converged, it_b = _solve_brent(
+                residual,
+                a,
+                b,
+                tol=tol,
+                max_iter=max_iter,
+            )
             iters += it_b
     else:
-        a, b = _bracket(f, lo, hi)
-        sigma, converged, iters = _solve_brent(f, a, b, tol=tol, max_iter=max_iter)
+        a, b = _bracket(residual, lo, hi)
+        sigma, converged, iters = _solve_brent(
+            residual,
+            a,
+            b,
+            tol=tol,
+            max_iter=max_iter,
+        )
 
     res = IVResult(
         sigma=max(sigma, lo),

@@ -20,21 +20,12 @@ from .dqn_agent import DQNAgent
 from .ppo_agent import PPOAgent
 from .a3c_agent import A3CAgent
 
+from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
+from symbolic_core.symbolic_equation41 import SE41Signals  # type: ignore
+
 try:  # pragma: no cover
-    from symbolic_core.symbolic_equation41 import SymbolicEquation41  # type: ignore
-    from symbolic_core.se41_context import assemble_se41_context  # type: ignore
+    from symbolic_core.context_builder import assemble_se41_context  # type: ignore
 except Exception:  # pragma: no cover
-
-    class SymbolicEquation41:  # type: ignore
-        def evaluate(self, ctx):
-            class S:
-                pass
-
-            s = S()
-            s.risk = ctx.get("risk_hint", 0.4)
-            s.uncertainty = ctx.get("uncertainty_hint", 0.4)
-            s.coherence = ctx.get("coherence_hint", 0.6)
-            return s
 
     def assemble_se41_context(**kw):
         return kw
@@ -46,7 +37,7 @@ def _clamp01(x: float) -> float:
 
 class SymbolicRLEngine:
     def __init__(
-        self, state_dim: int, symbolic: Optional[SymbolicEquation41] = None
+    self, state_dim: int, symbolic: Optional[Any] = None
     ) -> None:
         self.dqn = DQNAgent(state_dim, symbolic=symbolic)
         self.ppo = PPOAgent(state_dim, symbolic=symbolic)
@@ -66,7 +57,7 @@ class SymbolicRLEngine:
         a_ppo = self.ppo.act(state, risk_hint, uncertainty_hint, coherence_hint)
         a_a3c = self.a3c.act(state)
         # Weighting via governance (higher risk+uncertainty lowers weight)
-        se = self.symbolic.evaluate(
+        se: SE41Signals = self.symbolic.evaluate(
             assemble_se41_context(
                 risk_hint=risk_hint,
                 uncertainty_hint=uncertainty_hint,

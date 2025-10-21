@@ -1,0 +1,15 @@
+se_version: 4.2
+base_mode: lotus12
+alpha: 0.0
+chakra8_online: true
+audit_ndjson: true
+gate_12: [1,1,1,1,1,1,1,1,1,1,1,1]
+human_compat:
+  smoothing_halflife_sec: 480
+  phi_echo: true
+quantum:
+  total_ms: 1200
+  power_cap_watts: 60
+telemetry:
+  api: enabled
+  route: /api/hud/signals

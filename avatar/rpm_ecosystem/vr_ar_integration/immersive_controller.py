@@ -3,7 +3,7 @@
 Coordinates WebXR, VR headsets, AR, and hand tracking for immersive avatar experiences
 """
 
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, Union
 import logging
 from datetime import datetime
 import os
@@ -477,7 +477,8 @@ class ImmersiveController:
             self.ecosystem.logger.warning(f"Device {device_id} not found")
             return False
 
-        haptic_command = {
+        # Construct command (placeholder - implement with actual haptic API)
+        _cmd = {
             "device_id": device_id,
             "intensity": max(0.0, min(1.0, intensity)),
             "duration": duration,
@@ -588,7 +589,7 @@ class ImmersiveController:
 
     # Real-world integration methods
 
-    def start_real_world_session(self, config: Dict[str, Any] = None) -> str:
+    def start_real_world_session(self, config: Optional[Dict[str, Any]] = None) -> Optional[str]:
         """
         Start a comprehensive real-world session with AR glasses, body tracking, and GPS
 
@@ -682,7 +683,7 @@ class ImmersiveController:
         session_id: str,
         entity_type: str,
         entity_id: str,
-        location: Dict[str, float] = None,
+        location: Optional[Dict[str, float]] = None,
     ) -> bool:
         """
         Track an entity (avatar, robot, drone, nanobot) in the real world
@@ -791,7 +792,7 @@ class ImmersiveController:
         self,
         session_id: str,
         target_coordinates: Dict[str, float],
-        entity_id: str = None,
+        entity_id: Optional[str] = None,
     ) -> bool:
         """
         Navigate Eidollona to a specific real-world location
@@ -826,7 +827,9 @@ class ImmersiveController:
             return False
 
     def manifest_in_real_world(
-        self, session_id: str, location: Dict[str, float] = None
+        self,
+        session_id: str,
+        location: Optional[Union[Dict[str, float], Tuple[float, float, float]]] = None,
     ) -> bool:
         """
         Manifest Eidollona in the real world through AR glasses at current or specified location
@@ -866,8 +869,13 @@ class ImmersiveController:
 
             # Manifest through AR glasses
             if self.ar_glasses and target_location:
+                location_tuple = (
+                    self._normalize_location_tuple(target_location)
+                    if not isinstance(target_location, tuple)
+                    else target_location
+                )
                 success = self.ar_glasses.manifest_avatar(
-                    location=target_location,
+                    location=location_tuple,
                     consciousness_level=0.85,  # Sacred electromagnetic resonance
                     sacred_geometry_factor=1.618,  # Golden ratio
                 )
@@ -882,11 +890,22 @@ class ImmersiveController:
             self.ecosystem.logger.error(f"Failed to manifest in real world: {e}")
             return False
 
+    @staticmethod
+    def _normalize_location_tuple(
+        location: Union[Dict[str, float], Tuple[float, float, float]]
+    ) -> Tuple[float, float, float]:
+        if isinstance(location, tuple):
+            return location
+        lat = float(location.get("lat", location.get("x", 0.0)))
+        lon = float(location.get("lon", location.get("y", 0.0)))
+        alt = float(location.get("alt", location.get("z", 0.0)))
+        return (lat, lon, alt)
+
     async def enable_independent_avatar_vision(
         self,
         session_id: str,
         avatar_id: str = "eidollona_main",
-        location: Tuple[float, float, float] = None,
+        location: Optional[Tuple[float, float, float]] = None,
     ) -> bool:
         """
         Enable Eidollona to have independent vision separate from user

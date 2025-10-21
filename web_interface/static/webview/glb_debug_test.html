@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLB Debug Test</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #log {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>🔍 GLB Loading Debug</h3>
+        <div id="status">Initializing...</div>
+        <div id="log"></div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        const status = document.getElementById('status');
+        const log = document.getElementById('log');
+        
+        function updateStatus(msg) {
+            status.textContent = msg;
+        }
+        
+        function addLog(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${timestamp}] ${msg}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+            console.log(`[${timestamp}] ${msg}`);
+        }
+
+        setTimeout(() => {
+            if (typeof THREE === 'undefined') {
+                updateStatus('❌ Three.js failed to load');
+                return;
+            }
+            
+            addLog('✅ Three.js loaded successfully', 'success');
+            updateStatus('Testing GLB loading...');
+            
+            // Test 1: Check if GLB file is accessible
+            addLog('🔍 Step 1: Testing GLB file accessibility...', 'info');
+            
+            fetch('/webview/static/models/eidollona.glb')
+                .then(response => {
+                    if (response.ok) {
+                        addLog(`✅ GLB file accessible: ${response.status} ${response.statusText}`, 'success');
+                        addLog(`📊 File size: ${response.headers.get('content-length')} bytes`, 'info');
+                        return response.arrayBuffer();
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                })
+                .then(buffer => {
+                    addLog(`✅ GLB downloaded: ${buffer.byteLength} bytes`, 'success');
+                    
+                    // Test 2: Check GLB file format
+                    const view = new DataView(buffer);
+                    const magic = new TextDecoder().decode(new Uint8Array(buffer, 0, 4));
+                    addLog(`🔍 Step 2: GLB magic header: "${magic}"`, 'info');
+                    
+                    if (magic === 'glTF') {
+                        addLog('✅ Valid GLB file format detected', 'success');
+                        testGLTFLoader(buffer);
+                    } else {
+                        addLog(`❌ Invalid GLB format. Expected "glTF", got "${magic}"`, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog(`❌ GLB fetch failed: ${error.message}`, 'error');
+                });
+        }, 1000);
+        
+        function testGLTFLoader(buffer) {
+            addLog('🔍 Step 3: Testing GLTFLoader...', 'info');
+            
+            if (!THREE.GLTFLoader) {
+                addLog('❌ GLTFLoader not available', 'error');
+                return;
+            }
+            
+            addLog('✅ GLTFLoader available', 'success');
+            
+            const loader = new THREE.GLTFLoader();
+            
+            // Create a blob URL from the buffer
+            const blob = new Blob([buffer], { type: 'model/gltf-binary' });
+            const url = URL.createObjectURL(blob);
+            
+            addLog('🔍 Step 4: Parsing GLB with GLTFLoader...', 'info');
+            
+            loader.load(
+                url,
+                function(gltf) {
+                    addLog('✅ GLB parsed successfully!', 'success');
+                    addLog(`📊 Scene children: ${gltf.scene.children.length}`, 'info');
+                    addLog(`📊 Animations: ${gltf.animations.length}`, 'info');
+                    
+                    // Log scene structure
+                    function logObject(obj, depth = 0) {
+                        const indent = '  '.repeat(depth);
+                        addLog(`${indent}${obj.constructor.name}: "${obj.name || 'unnamed'}"`, 'info');
+                        if (obj.children) {
+                            obj.children.forEach(child => logObject(child, depth + 1));
+                        }
+                    }
+                    
+                    addLog('🔍 Scene structure:', 'info');
+                    logObject(gltf.scene);
+                    
+                    // Test rendering
+                    testRendering(gltf);
+                    
+                    // Clean up
+                    URL.revokeObjectURL(url);
+                },
+                function(progress) {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    addLog(`📊 Loading progress: ${percent}%`, 'info');
+                },
+                function(error) {
+                    addLog(`❌ GLTFLoader error: ${error.message}`, 'error');
+                    console.error('Full error:', error);
+                    URL.revokeObjectURL(url);
+                }
+            );
+        }
+        
+        function testRendering(gltf) {
+            addLog('🔍 Step 5: Testing rendering...', 'info');
+            
+            try {
+                // Create scene
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer();
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
+                
+                // Add lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
+                
+                // Add avatar to scene
+                scene.add(gltf.scene);
+                
+                // Position camera
+                camera.position.set(0, 1.6, 3);
+                camera.lookAt(0, 0, 0);
+                
+                // Test single render
+                renderer.render(scene, camera);
+                addLog('✅ Single render successful', 'success');
+                
+                // Start animation loop
+                let frame = 0;
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    // Rotate avatar slowly
+                    gltf.scene.rotation.y += 0.005;
+                    
+                    renderer.render(scene, camera);
+                    
+                    frame++;
+                    if (frame === 60) { // After 1 second at 60fps
+                        addLog('✅ Animation loop running smoothly', 'success');
+                        updateStatus('🎭 Avatar loaded and animating!');
+                    }
+                }
+                
+                animate();
+                addLog('🔄 Animation loop started', 'success');
+                
+            } catch (e) {
+                addLog(`❌ Rendering error: ${e.message}`, 'error');
+                console.error('Rendering error:', e);
+            }
+        }
+    </script>
+</body>
+</html>

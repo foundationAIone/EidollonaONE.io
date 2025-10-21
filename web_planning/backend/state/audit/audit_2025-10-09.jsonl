@@ -1,0 +1,1 @@
+{"ts": 1760014005.1526163, "actor": "someone", "action": "gov.authorize.check", "ctx": {"ip": "testclient", "SAFE_MODE": true}, "payload_digest": "470c48169c67505becf68aa01a64044db7009dc003b938f4a8e604e59f444604", "prev_hash": "GENESIS", "entry_hash": "778b5bbb6908f8464ca50bd1ca18f43e753c696fca26ddf62ab55bb056f42e74", "v": "1.0"}

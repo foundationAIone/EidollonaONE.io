@@ -12,7 +12,7 @@ Fails safe: if numpy unavailable or inputs invalid -> uniform weights.
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
 try:  # optional dependency
     import numpy as np  # type: ignore
@@ -30,7 +30,15 @@ except Exception:  # pragma: no cover
         return {"decision": "allow"}
 
 
-def _to_array(x: Sequence[float]) -> Optional["np.ndarray"]:
+if TYPE_CHECKING:
+    import numpy as _np
+
+    Array1D = _np.ndarray
+else:
+    Array1D = Any
+
+
+def _to_array(x: Sequence[float]) -> Optional[Array1D]:
     if np is None:
         return None
     try:
@@ -153,7 +161,11 @@ def efficient_frontier(
     # Vary risk aversion from high (conservative) to low (aggressive)
     for lam in np.linspace(5.0, 0.1, points):
         w = mean_variance_optimize(
-            mu, C, risk_aversion=float(lam), l2_reg=l2_reg, allow_short=False
+            exp_returns,
+            covariance,
+            risk_aversion=float(lam),
+            l2_reg=l2_reg,
+            allow_short=False,
         )
         if np is None:
             break

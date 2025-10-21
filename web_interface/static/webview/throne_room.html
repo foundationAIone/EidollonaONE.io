@@ -1,0 +1,1830 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Throne Room • SAFE Operator HUD</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+        max-width: 900px;
+        margin: 36px auto;
+        padding: 0 18px 48px;
+        background: #f9fafc;
+      }
+      h1 {
+        margin-bottom: 4px;
+      }
+      .muted {
+        color: #666;
+        font-size: 13px;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      @media (min-width: 840px) {
+        .grid.two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid #dde1ec;
+        padding: 18px;
+        box-shadow: 0 2px 8px rgba(20, 34, 66, 0.05);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 70px;
+        padding: 4px 10px;
+        margin-right: 8px;
+        border-radius: 999px;
+        font-weight: 600;
+        border: 1px solid transparent;
+      }
+      .badge.ready {
+        background: #e8fff0;
+        border-color: #8bd7a3;
+        color: #106430;
+      }
+      .badge.review {
+        background: #fff3dd;
+        border-color: #f0c979;
+        color: #8a5b00;
+      }
+      .badge.hold {
+        background: #ffe9ea;
+        border-color: #f2a6ad;
+        color: #871f2b;
+      }
+      .badge.road {
+        background: #e6f3ff;
+        border-color: #8ec5ff;
+        color: #0b4a7a;
+      }
+      .badge.shoulder {
+        background: #fff3dd;
+        border-color: #f0c979;
+        color: #8a5b00;
+      }
+      .badge.offroad {
+        background: #fde8f2;
+        border-color: #f59ec5;
+        color: #7b1d4f;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      td {
+        padding: 4px 0;
+      }
+      td:first-child {
+        color: #4a5878;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 12px;
+      }
+      pre {
+        background: #101b36;
+        color: #e5ecff;
+        padding: 12px;
+        border-radius: 10px;
+        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+      button {
+        cursor: pointer;
+        border-radius: 10px;
+        border: 1px solid #182c55;
+        background: linear-gradient(180deg, #284a92 0%, #142b5f 100%);
+        color: #fff;
+        padding: 9px 16px;
+        font-weight: 600;
+      }
+      button[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .button-link {
+        display: inline-block;
+        text-decoration: none;
+        border-radius: 10px;
+        border: 1px solid #182c55;
+        background: linear-gradient(180deg, #284a92 0%, #142b5f 100%);
+        color: #fff;
+        padding: 9px 16px;
+        font-weight: 600;
+        text-transform: none;
+      }
+      .button-link:hover {
+        opacity: 0.9;
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .runout {
+        max-height: 220px;
+        overflow: auto;
+      }
+      .flex-row {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .flex-row.gap-wide {
+        gap: 16px;
+      }
+      .mt-6 {
+        margin-top: 6px;
+      }
+      .mt-8 {
+        margin-top: 8px;
+      }
+      .mt-10 {
+        margin-top: 10px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #4a5878;
+      }
+      .returns-field {
+        flex: 1 1 260px;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        text-transform: none;
+        letter-spacing: normal;
+        margin-top: 4px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid #c5cde0;
+        background: #f7f9ff;
+        color: #1d2b52;
+        font-size: 14px;
+        min-width: 90px;
+      }
+      .field textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        outline: 2px solid rgba(40, 74, 146, 0.4);
+      }
+      .sovereign-banner {
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #1b2f55;
+      }
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .slider-row input[type="range"] {
+        width: 220px;
+      }
+      .muted strong {
+        color: inherit;
+      }
+      .console-output {
+        min-height: 80px;
+      }
+      #avatar-canvas {
+        width: 100%;
+        max-width: 720px;
+        min-height: 320px;
+        border-radius: 12px;
+        background: radial-gradient(circle at 50% 30%, rgba(212, 175, 55, 0.3), rgba(17, 33, 65, 0.9));
+        display: block;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
+      }
+      .avatar-note {
+        font-size: 12px;
+        color: #4a5878;
+        margin-top: 12px;
+      }
+      .lip-sync-controls {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid #e4e7f2;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .lip-sync-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .lip-sync-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      #lip-sync-stop {
+        background: linear-gradient(180deg, #5b6884 0%, #39435a 100%);
+        border-color: #39435a;
+      }
+      .lip-meter {
+        position: relative;
+        --lip-meter-fill: 0%;
+        flex: 0 1 180px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(24, 44, 85, 0.25);
+        overflow: hidden;
+      }
+      .lip-meter::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #284a92 0%, #8ec5ff 100%);
+        width: var(--lip-meter-fill);
+        transition: width 90ms linear;
+      }
+      .lip-sync-meta {
+        font-size: 12px;
+        color: #4a5878;
+      }
+      .lip-sync-meta strong {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Throne Room (SAFE)</h1>
+    <div class="muted">Local loop • Token gated • Audit aligned</div>
+
+    <div class="card" id="sovereign-card">
+      <div class="sovereign-banner">Sovereign Mode: Eidollona — Four Pillars bound</div>
+      <div class="flex-row mt-8">
+        <span id="sovereign-road" class="badge road">—</span>
+        <span id="sovereign-gate" class="badge hold">—</span>
+        <span class="muted">Ouroboros score: <strong id="ouro-display">0.20</strong></span>
+      </div>
+      <div class="slider-row mt-8">
+        <label class="field">Ouroboros (sim)
+          <input id="ouro-slider" type="range" min="0" max="100" value="20" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>Status ➜ Gate</strong>
+      <div class="flex-row">
+        <span id="statusBadge" class="badge">—</span>
+        <span id="gateBadge" class="badge hold">—</span>
+        <span id="timestamp" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>Capstone</strong>
+      <div class="muted mt-6">Run the Arm → Preflight → Engage sequence once readiness is GREEN.</div>
+      <div class="actions mt-8">
+        <a class="button-link" href="capstone.html" target="_blank" rel="noopener">Open Capstone HUD</a>
+      </div>
+      <div class="muted mt-8">Requires token query parameter; defaults to dev-token if omitted.</div>
+    </div>
+
+    <div class="card" id="avatar-card" data-default-vrm="/static/webview/assets/avatars/eidollona_idle.vrm">
+      <strong>🧠 Avatar Stage (Eidollona)</strong>
+      <div class="muted mt-6" id="avatar-status">✅ Avatar model ready</div>
+      <div class="actions mt-8">
+        <button id="avatar-scan">Scan Models</button>
+        <button id="avatar-load">Load Avatar</button>
+      </div>
+      <canvas id="avatar-canvas"></canvas>
+      <div class="avatar-controls mt-8">
+        <div class="flex-row">
+          <button id="avatar-idle">Idle Pose</button>
+          <button id="avatar-sit">Sit on Throne</button>
+          <button id="avatar-wave">Wave Gesture</button>
+        </div>
+      </div>
+      <div class="muted mt-6" style="font-size: 12px;">
+        ✅ <strong>Found:</strong> <code>eidollona.glb</code> in models directory<br>
+        � <strong>Status:</strong> Ready for 3D rendering<br>
+        ⚡ <strong>Action:</strong> Click "Load Avatar" to initialize 3D view
+      </div>
+      <div class="lip-sync-controls" id="lip-sync-controls">
+        <div class="lip-sync-row">
+          <div class="lip-sync-buttons">
+            <button id="lip-sync-start">Start Lip Sync</button>
+            <button id="lip-sync-stop" disabled>Stop</button>
+          </div>
+          <div class="lip-meter" id="lip-sync-meter" aria-hidden="true"></div>
+          <div class="muted" id="lip-sync-status">Mic idle</div>
+        </div>
+        <div class="lip-sync-row">
+          <label class="field">Viseme Cap
+            <input id="lip-sync-cap" type="range" min="0" max="65" value="35" />
+          </label>
+          <div class="lip-sync-meta">Clamp <strong id="lip-sync-cap-value">0.35</strong></div>
+          <div class="lip-sync-meta" id="lip-sync-ser">SER ledger: —</div>
+        </div>
+        <div class="muted lip-sync-meta">Audio stays local; visemes respect sovereign silence caps.</div>
+      </div>
+      <div class="avatar-note">
+        Toggle VRM rendering by appending <code>?vrm=1&amp;vrmUrl=/static/webview/assets/avatars/your_avatar.vrm</code>. Assets stay sandboxed — no trading cues are emitted from expressions.
+      </div>
+    </div>
+
+    <div class="grid two">
+      <div class="card">
+        <strong>Signals</strong>
+        <table>
+          <tr><td>Coherence</td><td id="coherence">—</td></tr>
+          <tr><td>Impetus</td><td id="impetus">—</td></tr>
+          <tr><td>Risk</td><td id="risk">—</td></tr>
+          <tr><td>Uncertainty</td><td id="uncertainty">—</td></tr>
+          <tr><td>Mirror</td><td id="mirror">—</td></tr>
+          <tr><td>S_EM</td><td id="se">—</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <strong>Ethos</strong>
+        <table>
+          <tr><td>Authenticity</td><td id="ethos-auth">—</td></tr>
+          <tr><td>Integrity</td><td id="ethos-int">—</td></tr>
+          <tr><td>Responsibility</td><td id="ethos-resp">—</td></tr>
+          <tr><td>Enrichment</td><td id="ethos-enr">—</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>SER Ledger</strong>
+      <div class="flex-row gap-wide">
+        <div>Balance: <span id="ser-balance">—</span> SER</div>
+        <div>Entries: <span id="ser-entries">—</span></div>
+        <button id="ser-credit">+10 (paper)</button>
+      </div>
+      <div class="muted mt-8">Paper credits require gate = ALLOW.</div>
+    </div>
+
+      <div class="card" id="cluster-card">
+        <strong>Cluster Jobs</strong>
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">Job
+            <input id="cluster-job" type="text" value="hud-null-job" />
+          </label>
+          <label class="field">Provider
+            <select id="cluster-provider">
+              <option value="null" selected>null</option>
+              <option value="k8s">k8s</option>
+              <option value="slurm">slurm</option>
+              <option value="cloud">cloud</option>
+            </select>
+          </label>
+          <label class="field">GPU
+            <input id="cluster-gpu" type="number" min="0" step="1" value="8" />
+          </label>
+          <label class="field">Hours
+            <input id="cluster-hours" type="number" min="0" step="0.1" value="2" />
+          </label>
+          <label class="field">Mem (GB)
+            <input id="cluster-mem" type="number" min="0" step="1" value="128" />
+          </label>
+          <label class="field">Cost Cap (USD)
+            <input id="cluster-cost" type="number" min="0" step="1" value="1000" />
+          </label>
+        </div>
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">Job ID
+            <input id="cluster-job-id" type="text" placeholder="submit to populate" />
+          </label>
+        </div>
+        <div class="actions mt-8">
+          <button id="cluster-quote">Quote</button>
+          <button id="cluster-submit">Submit</button>
+          <button id="cluster-status">Status</button>
+        </div>
+        <pre id="cluster-output" class="runout mt-8">(cluster output will appear here)</pre>
+      </div>
+
+      <div class="card" id="resonance-card">
+        <strong>Resonance Console</strong>
+        <div class="muted mt-6">Twelve-tone symbolic activation (simulation only).</div>
+        <div class="actions mt-8">
+          <button id="resonance-compute">Compute 12-tone set</button>
+          <button id="resonance-play">Play</button>
+        </div>
+        <pre id="resonance-output" class="runout console-output mt-8">(tones will appear here)</pre>
+      </div>
+
+        <div class="card" id="pqre-card">
+          <strong>PQRE Visuals</strong>
+          <div class="muted mt-6">Probabilistic Quantum Rendering preview — safe by default, WebGPU optional.</div>
+          <div class="flex-row mt-8">
+            <span id="pqre-webgpu-support" class="badge hold">WebGL</span>
+            <span class="muted" id="pqre-webgpu-status">Checking browser capabilities…</span>
+          </div>
+          <div class="actions mt-8">
+            <button id="pqre-webgpu-toggle">Enable WebGPU</button>
+          </div>
+          <div class="avatar-note">Sovereign expressions stay trading-silent; WebGPU mode is scoped to PQRE shaders only.</div>
+        </div>
+
+      <div class="card" id="node-card">
+        <strong>Node Dialogue</strong>
+        <div class="muted mt-6">Open channels then echo-safe speak.</div>
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">Node ID
+            <input id="node-id" type="text" placeholder="node-01" />
+          </label>
+          <label class="field">Message
+            <textarea id="node-msg" placeholder="Sovereign pulse"></textarea>
+          </label>
+        </div>
+        <div class="actions mt-8">
+          <button id="node-send">Send</button>
+        </div>
+        <pre id="node-output" class="runout console-output mt-8">(node replies appear here)</pre>
+      </div>
+
+      <div class="card" id="options-regime-card">
+        <strong>Options &amp; Regimes</strong>
+        <div class="muted mt-6">Price, calibrate, hedge, and classify regimes — all token gated.</div>
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">Model
+            <select id="opt-model">
+              <option value="bsm" selected>Black–Scholes</option>
+              <option value="bachelier">Bachelier</option>
+            </select>
+          </label>
+          <label class="field">Kind
+            <select id="opt-kind">
+              <option value="call" selected>Call</option>
+              <option value="put">Put</option>
+            </select>
+          </label>
+          <label class="field">S
+            <input id="opt-s" type="number" step="0.01" value="100" />
+          </label>
+          <label class="field">K
+            <input id="opt-k" type="number" step="0.01" value="100" />
+          </label>
+        </div>
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">r
+            <input id="opt-r" type="number" step="0.0001" value="0.02" />
+          </label>
+          <label class="field">q
+            <input id="opt-q" type="number" step="0.0001" value="0.00" />
+          </label>
+          <label class="field">σ
+            <input id="opt-sigma" type="number" step="0.0001" value="0.20" />
+          </label>
+          <label class="field">t (yrs)
+            <input id="opt-t" type="number" step="0.0001" value="0.5" />
+          </label>
+        </div>
+        <div class="actions mt-8">
+          <button id="opt-price">Price &amp; Greeks</button>
+          <button id="opt-iv">Implied Vol</button>
+        </div>
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">Target Price
+            <input id="opt-target" type="number" step="0.0001" placeholder="auto from price" />
+          </label>
+        </div>
+        <pre id="opt-output" class="runout console-output mt-8">(option analytics appear here)</pre>
+
+        <div class="flex-row gap-wide mt-8">
+          <label class="field">Sovereign Gate
+            <select id="hedge-sovereign">
+              <option value="ROAD" selected>ROAD</option>
+              <option value="SHOULDER">SHOULDER</option>
+              <option value="OFFROAD">OFFROAD</option>
+            </select>
+          </label>
+          <label class="field">Gate
+            <select id="hedge-gate">
+              <option value="ALLOW" selected>ALLOW</option>
+              <option value="REVIEW">REVIEW</option>
+              <option value="HOLD">HOLD</option>
+            </select>
+          </label>
+          <label class="field">Qty
+            <input id="hedge-qty" type="number" step="0.01" value="-10" />
+          </label>
+          <button id="opt-hedge">Delta Hedge</button>
+        </div>
+        <pre id="hedge-output" class="runout console-output mt-8">(hedge preview appears here)</pre>
+
+        <div class="flex-row gap-wide mt-8">
+          <label class="field returns-field">Returns (comma or space separated)
+            <textarea id="regime-returns" placeholder="0.0, 0.01, -0.005, 0.012, -0.006, 0.003, 0.02, -0.01"></textarea>
+          </label>
+        </div>
+        <div class="actions mt-8">
+          <button id="regime-hmm">Regime Inference</button>
+          <button id="regime-runs">Runs Test</button>
+        </div>
+        <pre id="regime-output" class="runout console-output mt-8">(regime diagnostics appear here)</pre>
+        <pre id="emh-output" class="runout console-output mt-8">(EMH runs test appears here)</pre>
+      </div>
+
+    <div class="card" id="emp-guard-card">
+      <strong>🛡️ Pulse Guard (EMP Defense)</strong>
+      <div class="flex-row mt-6">
+        <span id="emp-posture" class="badge">—</span>
+        <span class="muted">Status: <strong id="emp-status">Initializing</strong></span>
+      </div>
+      <div class="actions mt-8">
+        <button id="emp-scan">Scan Posture</button>
+        <button id="emp-drill">Run Drill</button>
+        <button id="emp-rebind">Ethos Rebind</button>
+      </div>
+      <pre id="emp-output" class="runout console-output mt-8">(EMP defensive status appears here)</pre>
+      <div class="muted mt-6">Defensive electromagnetic pulse risk management • Simulation only</div>
+    </div>
+
+    <div class="card">
+      <strong>Next Action</strong>
+      <div class="mt-6">Reason: <span id="next-reason">—</span></div>
+      <pre id="next-command">Awaiting signal…</pre>
+      <div class="actions">
+        <button id="copy-command">Copy command</button>
+        <button id="run-next">Run Next</button>
+      </div>
+      <div class="muted mt-10">Run Next executes paper orchestrator only when gate = ALLOW.</div>
+      <pre id="run-output" class="runout">(stdout tail will appear here)</pre>
+    </div>
+  <script type="module" src="js/vrm_loader.js"></script>
+  <script type="module" src="js/pqre_webgpu_toggle.js"></script>
+  <script type="module" src="js/voice_lipsync.js"></script>
+  <!-- Three.js for GLB avatar rendering - Local files with CDN fallback -->
+  <script src="/webview/static/webview/js/three.min.js" onerror="loadThreeJSFallback()"></script>
+  <script src="/webview/static/webview/js/GLTFLoader.js" onerror="loadGLTFLoaderFallback()"></script>
+  
+  <script>
+    function loadThreeJSFallback() {
+      console.log('Local Three.js failed, loading from CDN...');
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/three@0.158.0/build/three.min.js';
+      script.onload = function() {
+        loadGLTFLoaderFallback();
+      };
+      document.head.appendChild(script);
+    }
+    
+    function loadGLTFLoaderFallback() {
+      console.log('Loading GLTFLoader from CDN...');
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/three@0.158.0/examples/js/loaders/GLTFLoader.js';
+      document.head.appendChild(script);
+    }
+  </script>
+    <script>
+  const BASE = "http://127.0.0.1:8802";
+  const TOKEN = "dev-token";
+  const HUD_OPERATOR = "programmerONE";
+      const OURO_STORAGE_KEY = "sovereign_ouro";
+      const POLL_MS = 2000;
+  const state = {
+    nextCommand: "",
+    gate: "HOLD",
+    clusterJobId: "",
+    signals: {},
+    ouro: 0.2,
+    resonance: null,
+    audioCtx: null,
+    sovereignGate: { road: "OFFROAD", gate: "HOLD" },
+  };
+      let sovereignGateController = null;
+
+      function syncHedgeSelectors() {
+        const sovereignSelect = $("hedge-sovereign");
+        const gateSelect = $("hedge-gate");
+        if (sovereignSelect && state.sovereignGate && state.sovereignGate.road) {
+          sovereignSelect.value = state.sovereignGate.road;
+        }
+        if (gateSelect && state.sovereignGate && state.sovereignGate.gate) {
+          gateSelect.value = state.sovereignGate.gate;
+        }
+      }
+
+      function $(id) {
+        return document.getElementById(id);
+      }
+
+      function ensureSimCard() {
+        if ($("sim-sec-card")) {
+          return;
+        }
+        const card = document.createElement("div");
+        card.className = "card";
+        card.id = "sim-sec-card";
+        card.innerHTML = `
+          <strong>Simulation &amp; Security</strong>
+          <div class="muted mt-6" id="sim-sec-summary">Awaiting ping…</div>
+          <div class="actions mt-8">
+            <button id="sim-refresh">Sim Grid Ping</button>
+            <button id="sec-refresh">Security Policy Ping</button>
+          </div>
+          <pre id="sim-sec-output" class="runout mt-8">(simulation &amp; security output will appear here)</pre>
+        `;
+        const clusterCard = $("cluster-card");
+        if (clusterCard && clusterCard.parentNode) {
+          clusterCard.parentNode.insertBefore(card, clusterCard.nextSibling);
+        } else {
+          document.body.appendChild(card);
+        }
+      }
+
+      function writeSimSec(content) {
+        const output = $("sim-sec-output");
+        if (!output) {
+          return;
+        }
+        if (typeof content === "string") {
+          output.textContent = content;
+        } else {
+          output.textContent = JSON.stringify(content, null, 2);
+        }
+      }
+
+      function setBadge(el, gate) {
+        el.classList.remove("ready", "review", "hold");
+        if (gate === "ALLOW") {
+          el.classList.add("ready");
+        } else if (gate === "REVIEW") {
+          el.classList.add("review");
+        } else {
+          el.classList.add("hold");
+        }
+        el.textContent = gate;
+      }
+
+      function clamp01(x) {
+        const num = Number(x);
+        if (!isFinite(num)) {
+          return 0;
+        }
+        if (num < 0) {
+          return 0;
+        }
+        if (num > 1) {
+          return 1;
+        }
+        return num;
+      }
+
+      function roadMap(coherence, impetus, risk, uncertainty, ouro) {
+        const c = clamp01(coherence);
+        const r = clamp01(risk);
+        clamp01(impetus);
+        clamp01(uncertainty);
+        const o = clamp01(ouro);
+        if (c >= 0.75 && r <= 0.2 && o <= 0.35) {
+          return { road: "ROAD", gate: "ALLOW" };
+        }
+        if (c >= 0.6 && r <= 0.35 && o <= 0.55) {
+          return { road: "SHOULDER", gate: "REVIEW" };
+        }
+        return { road: "OFFROAD", gate: "HOLD" };
+      }
+
+      function setRoadBadge(el, road) {
+        if (!el) {
+          return;
+        }
+        el.classList.remove("road", "shoulder", "offroad");
+        if (road === "ROAD") {
+          el.classList.add("road");
+        } else if (road === "SHOULDER") {
+          el.classList.add("shoulder");
+        } else {
+          el.classList.add("offroad");
+        }
+        el.textContent = road;
+      }
+
+      function setOuro(value, reason = "manual") {
+        state.ouro = clamp01(value);
+        const slider = $("ouro-slider");
+        if (slider && Math.round(state.ouro * 100) !== Number(slider.value)) {
+          slider.value = String(Math.round(state.ouro * 100));
+        }
+        const display = $("ouro-display");
+        if (display) {
+          display.textContent = state.ouro.toFixed(2);
+        }
+        try {
+          localStorage.setItem(OURO_STORAGE_KEY, state.ouro.toFixed(4));
+        } catch (err) {
+          console.debug("ouro storage skipped", err);
+        }
+        void applySovereignGate(reason);
+      }
+
+      function handleOuroSlider(event) {
+        const raw = event && event.target ? Number(event.target.value) : state.ouro * 100;
+        setOuro(raw / 100, "slider");
+      }
+
+      async function applySovereignGate(reason = "status") {
+        const roadEl = $("sovereign-road");
+        const gateEl = $("sovereign-gate");
+        if (!roadEl || !gateEl) {
+          return;
+        }
+        const signals = state.signals || {};
+        const fallback = roadMap(
+          signals.coherence ?? 0,
+          signals.impetus ?? 0,
+          signals.risk ?? 1,
+          signals.uncertainty ?? 0,
+          state.ouro
+        );
+        try {
+          if (sovereignGateController) {
+            sovereignGateController.abort();
+          }
+        } catch (err) {
+          console.debug("abort sovereign gate", err);
+        }
+        try {
+          sovereignGateController = new AbortController();
+          const data = await fetchJson(`${BASE}/v1/sovereign/gate?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ signals, ouroboros: state.ouro, reason }),
+            signal: sovereignGateController.signal,
+          });
+          const road = (data.sovereign_gate || data.road || fallback.road || "OFFROAD").toString().toUpperCase();
+          const gate = (data.gate || fallback.gate || "HOLD").toString().toUpperCase();
+          setRoadBadge(roadEl, road);
+          setBadge(gateEl, gate);
+          state.sovereignGate = { road, gate };
+          syncHedgeSelectors();
+        } catch (err) {
+          if (err && err.name === "AbortError") {
+            return;
+          }
+          console.warn("sovereign gate fallback", err);
+          setRoadBadge(roadEl, fallback.road || "OFFROAD");
+          setBadge(gateEl, fallback.gate || "HOLD");
+          state.sovereignGate = { road: fallback.road || "OFFROAD", gate: fallback.gate || "HOLD" };
+          syncHedgeSelectors();
+        } finally {
+          sovereignGateController = null;
+        }
+      }
+
+      async function refreshSimSec() {
+        if (!$("sim-sec-output")) {
+          return;
+        }
+        try {
+          const gridData = await fetchJson(`${BASE}/v1/sim/emp/grid?nx=16&ny=16&t=0&token=${TOKEN}`);
+          const policyData = await fetchJson(`${BASE}/v1/sec/policy?token=${TOKEN}`);
+          const policy = policyData.policy || {};
+          const caps = policy.caps || {};
+          const capUsd = caps.cost_usd_max !== undefined && caps.cost_usd_max !== null ? caps.cost_usd_max : "—";
+          const summary = `Grid ${gridData.nx}x${gridData.ny} @ t=${Number(gridData.t || 0).toFixed(2)} • Caps USD ${capUsd}`;
+          const summaryEl = $("sim-sec-summary");
+          if (summaryEl) {
+            summaryEl.textContent = summary;
+          }
+          writeSimSec({ grid: { nx: gridData.nx, ny: gridData.ny, t: gridData.t }, caps: caps });
+        } catch (err) {
+          const summaryEl = $("sim-sec-summary");
+          if (summaryEl) {
+            summaryEl.textContent = `sim/sec error: ${err.message}`;
+          }
+          writeSimSec({ error: err.message || String(err) });
+        }
+      }
+
+      async function pingEmpGrid() {
+        try {
+          const status = $("#emp-status");
+          if (status) status.textContent = "Fetching EMP grid...";
+          const data = await fetchJson(`${BASE}/v1/sim/emp/grid?nx=16&ny=16&t=0&token=${TOKEN}`);
+          $("#sim-output").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          $("#sim-output").textContent = `Error: ${err.message}`;
+        }
+      }
+
+      // Avatar Animation Functions (RPM-style)
+      function setAvatarIdle() {
+        if (window.avatarModel) {
+          window.avatarState = 'idle';
+          window.avatarModel.position.set(0, -1.5, 0);
+          window.avatarModel.rotation.set(0, 0, 0);
+          $("#avatar-status").textContent = "👤 Avatar: Idle standing pose";
+        }
+      }
+
+      function setAvatarSitting() {
+        if (window.avatarModel) {
+          window.avatarState = 'sitting';
+          // Position avatar on throne (based on RPM sitting animation guidelines)
+          window.avatarModel.position.set(0, -0.8, -0.8);
+          window.avatarModel.rotation.set(0, 0, 0);
+          $("#avatar-status").textContent = "👑 Avatar: Sitting on throne";
+        }
+      }
+
+      function setAvatarWaving() {
+        if (window.avatarModel) {
+          window.avatarState = 'waving';
+          // Simple wave gesture - in full RPM system would use proper animations
+          let waveCount = 0;
+          const waveInterval = setInterval(() => {
+            if (window.avatarModel && window.avatarState === 'waving') {
+              window.avatarModel.rotation.z = Math.sin(waveCount * 0.5) * 0.2;
+              waveCount++;
+              if (waveCount > 20) {
+                clearInterval(waveInterval);
+                setAvatarIdle();
+              }
+            }
+          }, 100);
+          $("#avatar-status").textContent = "👋 Avatar: Waving gesture";
+        }
+      }
+
+      // Avatar Functions
+      async function scanAvatarModels() {
+        try {
+          const status = $("#avatar-status");
+          if (status) status.textContent = "Scanning for models...";
+          
+          // Try to ping for available models
+          const response = await fetch(`${BASE}/v1/avatar/models?token=${TOKEN}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (status) status.textContent = `Found ${data.models?.length || 0} models`;
+          } else {
+            if (status) status.textContent = "⚠️ No avatar models found - Install required";
+          }
+        } catch (err) {
+          const status = $("#avatar-status");
+          if (status) status.textContent = "⚠️ No avatar models found - Install required";
+        }
+      }
+
+      async function loadAvatarModel() {
+        try {
+          const status = $("#avatar-status");
+          const canvas = $("#avatar-canvas");
+          
+          if (status) status.textContent = "🔍 Checking GLB file...";
+          
+          // First, test if GLB file exists
+          const testResponse = await fetch("/webview/assets/models/eidollona.glb", { method: 'HEAD' });
+          if (!testResponse.ok) {
+            throw new Error(`GLB file not found (${testResponse.status})`);
+          }
+          
+          if (canvas) {
+            canvas.style.display = "block";
+            canvas.style.width = "100%";
+            canvas.style.height = "320px";
+            canvas.style.backgroundColor = "#1a1a2e"; // Dark blue background for debugging
+          }
+          
+          if (status) status.textContent = "✅ GLB found. Checking Three.js...";
+          
+          // Check if Three.js is available
+          if (typeof THREE === 'undefined') {
+            if (status) status.textContent = "❌ Three.js not loaded. Check console for errors.";
+            console.error("Three.js is not available. Check script loading.");
+            return;
+          }
+          
+          if (status) status.textContent = "🎭 Three.js ready. Initializing scene...";
+          
+          // Initialize Three.js scene
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+          const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+          renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+          renderer.setClearColor(0x1a1a2e, 1); // Dark background
+          
+          // Add simple test geometry first
+          const testGeometry = new THREE.BoxGeometry(1, 1, 1);
+          const testMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          const testCube = new THREE.Mesh(testGeometry, testMaterial);
+          testCube.position.set(-2, 0, 0);
+          scene.add(testCube);
+          
+          // Add lighting
+          const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+          scene.add(ambientLight);
+          const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+          directionalLight.position.set(1, 1, 1);
+          scene.add(directionalLight);
+          
+          camera.position.set(0, 0, 4);
+          
+          // Start render loop first to show we have a working scene
+          function animate() {
+            requestAnimationFrame(animate);
+            testCube.rotation.x += 0.01;
+            testCube.rotation.y += 0.01;
+            renderer.render(scene, camera);
+          }
+          animate();
+          
+          if (status) status.textContent = "🟢 Scene ready. Loading GLB avatar...";
+          
+          // Now try to load the GLB
+          if (THREE.GLTFLoader) {
+            const loader = new THREE.GLTFLoader();
+            loader.load('/webview/assets/models/eidollona.glb', 
+              (gltf) => {
+                const avatar = gltf.scene;
+                avatar.scale.set(1, 1, 1);
+                avatar.position.set(0, -1, 0);
+                scene.add(avatar);
+                
+                if (status) status.textContent = "👑 Avatar loaded successfully!";
+              },
+              (progress) => {
+                if (status) status.textContent = `� Loading GLB... ${Math.round(progress.loaded/progress.total*100)}%`;
+              },
+              (error) => {
+                console.error('GLB loading error:', error);
+                if (status) status.textContent = `❌ GLB load failed: ${error.message}`;
+              }
+            );
+          } else {
+            if (status) status.textContent = "❌ GLTFLoader not available";
+          }
+          
+        } catch (err) {
+          const status = $("#avatar-status");
+          if (status) status.textContent = `❌ Error: ${err.message}`;
+          console.error("Avatar loading error:", err);
+        }
+      }
+
+      async function installAvatarAssets() {
+        try {
+          const status = $("#avatar-status");
+          if (status) status.textContent = "Install via VS Code tasks...";
+          
+          // Guide user to use VS Code tasks
+          alert("Use VS Code Tasks:\n1. Ctrl+Shift+P → 'Tasks: Run Task'\n2. Select 'Avatar: Install assets'\n3. Follow prompts for GLB+portrait files");
+        } catch (err) {
+          console.error("Avatar install guidance error:", err);
+        }
+      }
+
+      // EMP-Guard Functions
+      async function scanEmpPosture() {
+        try {
+          const status = $("#emp-status");
+          const output = $("#emp-output");
+          const posture = $("#emp-posture");
+          
+          if (status) status.textContent = "Scanning...";
+          if (output) output.textContent = "Scanning electromagnetic exposure posture...";
+          
+          const data = await fetchJson(`${BASE}/v1/emp-guard/posture?token=${TOKEN}`);
+          
+          if (data.ok) {
+            if (posture) {
+              posture.textContent = "SCANNED";
+              posture.className = "badge ok";
+            }
+            if (status) status.textContent = "Posture Ready";
+            if (output) {
+              output.textContent = JSON.stringify(data.posture, null, 2);
+            }
+          } else {
+            throw new Error("Posture scan failed");
+          }
+        } catch (err) {
+          const status = $("#emp-status");
+          const output = $("#emp-output");
+          const posture = $("#emp-posture");
+          
+          if (status) status.textContent = "Error";
+          if (posture) {
+            posture.textContent = "ERROR";
+            posture.className = "badge error";
+          }
+          if (output) output.textContent = `Error: ${err.message}`;
+        }
+      }
+
+      async function runEmpDrill() {
+        try {
+          const status = $("#emp-status");
+          const output = $("#emp-output");
+          
+          if (status) status.textContent = "Running drill...";
+          if (output) output.textContent = "Executing defensive electromagnetic drill...";
+          
+          const data = await fetchJson(`${BASE}/v1/emp-guard/drill/run?token=${TOKEN}`);
+          
+          if (data.ok && data.result.ok) {
+            if (status) status.textContent = "Drill Complete";
+            if (output) {
+              output.textContent = JSON.stringify(data.result, null, 2);
+            }
+          } else {
+            throw new Error("Drill execution failed");
+          }
+        } catch (err) {
+          const status = $("#emp-status");
+          const output = $("#emp-output");
+          
+          if (status) status.textContent = "Drill Error";
+          if (output) output.textContent = `Error: ${err.message}`;
+        }
+      }
+
+      async function rebindEmpEthos() {
+        try {
+          const status = $("#emp-status");
+          const output = $("#emp-output");
+          
+          if (status) status.textContent = "Rebinding...";
+          if (output) output.textContent = "Rebinding autonomous bots to Ethos/SE41 policy...";
+          
+          const response = await fetch(`${BASE}/v1/emp-guard/rebind/ethos?token=${TOKEN}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          const data = await response.json();
+          
+          if (data.ok && data.result) {
+            if (status) status.textContent = "Ethos Bound";
+            if (output) {
+              output.textContent = JSON.stringify(data.result, null, 2);
+            }
+          } else {
+            throw new Error("Ethos rebind failed");
+          }
+        } catch (err) {
+          const status = $("#emp-status");
+          const output = $("#emp-output");
+          
+          if (status) status.textContent = "Rebind Error";
+          if (output) output.textContent = `Error: ${err.message}`;
+        }
+      }
+
+      async function pingEmpGrid() {
+        if (!$("sim-sec-output")) {
+          return;
+        }
+        try {
+          const data = await fetchJson(`${BASE}/v1/sim/emp/grid?nx=16&ny=16&t=0&token=${TOKEN}`);
+          const summaryEl = $("sim-sec-summary");
+          if (summaryEl) {
+            summaryEl.textContent = `Grid ${data.nx}x${data.ny} @ t=${Number(data.t || 0).toFixed(2)}`;
+          }
+          writeSimSec({ grid: { nx: data.nx, ny: data.ny, t: data.t } });
+        } catch (err) {
+          const summaryEl = $("sim-sec-summary");
+          if (summaryEl) {
+            summaryEl.textContent = `sim error: ${err.message}`;
+          }
+          writeSimSec({ error: err.message || String(err) });
+        }
+      }
+
+      async function pingSecurityPolicy() {
+        if (!$("sim-sec-output")) {
+          return;
+        }
+        try {
+          const data = await fetchJson(`${BASE}/v1/sec/policy?token=${TOKEN}`);
+          const policy = data.policy || {};
+          const caps = policy.caps || {};
+          const summaryEl = $("sim-sec-summary");
+          const capUsd = caps.cost_usd_max !== undefined && caps.cost_usd_max !== null ? caps.cost_usd_max : "—";
+          const capEnergy = caps.energy_kwh_max !== undefined && caps.energy_kwh_max !== null ? caps.energy_kwh_max : "—";
+          const capHours = caps.hours_max !== undefined && caps.hours_max !== null ? caps.hours_max : "—";
+          if (summaryEl) {
+            summaryEl.textContent = `Caps USD ${capUsd} • Energy ${capEnergy} • Hours ${capHours}`;
+          }
+          writeSimSec({ policy: policy });
+        } catch (err) {
+          const summaryEl = $("sim-sec-summary");
+          if (summaryEl) {
+            summaryEl.textContent = `sec error: ${err.message}`;
+          }
+          writeSimSec({ error: err.message || String(err) });
+        }
+      }
+
+      async function fetchJson(url, options) {
+        const res = await fetch(url, options);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      }
+
+      function readNumber(id, fallback) {
+        const el = $(id);
+        if (!el) {
+          return fallback;
+        }
+        const num = Number(el.value);
+        return Number.isFinite(num) ? num : fallback;
+      }
+
+      function writeOutput(id, payload, placeholder) {
+        const el = $(id);
+        if (!el) {
+          return;
+        }
+        if (payload === null || payload === undefined) {
+          el.textContent = placeholder || "";
+          return;
+        }
+        if (typeof payload === "string") {
+          el.textContent = payload;
+        } else {
+          el.textContent = JSON.stringify(payload, null, 2);
+        }
+      }
+
+      function parseReturnsInput() {
+        const el = $("regime-returns");
+        if (!el) {
+          return [];
+        }
+        return el.value
+          .split(/[,\s]+/)
+          .map((chunk) => chunk.trim())
+          .filter((chunk) => chunk.length)
+          .map((chunk) => Number(chunk))
+          .filter((num) => Number.isFinite(num));
+      }
+
+      async function updateStatus() {
+        try {
+          const data = await fetchJson(`${BASE}/v1/status/summary?token=${TOKEN}`);
+          state.gate = data.gate || "HOLD";
+          $("statusBadge").textContent = data.readiness || "—";
+          setBadge($("gateBadge"), state.gate);
+          const sig = data.signals || {};
+          $("coherence").textContent = (sig.coherence ?? 0).toFixed(3);
+          $("impetus").textContent = (sig.impetus ?? 0).toFixed(3);
+          $("risk").textContent = (sig.risk ?? 0).toFixed(3);
+          $("uncertainty").textContent = (sig.uncertainty ?? 0).toFixed(3);
+          $("mirror").textContent = (sig.mirror_consistency ?? 0).toFixed(3);
+          $("se").textContent = (sig.S_EM ?? 0).toFixed(3);
+          const ethos = sig.ethos || {};
+          $("ethos-auth").textContent = (ethos.authenticity ?? 0).toFixed(2);
+          $("ethos-int").textContent = (ethos.integrity ?? 0).toFixed(2);
+          $("ethos-resp").textContent = (ethos.responsibility ?? 0).toFixed(2);
+          $("ethos-enr").textContent = (ethos.enrichment ?? 0).toFixed(2);
+          state.signals = Object.assign({}, sig);
+          const ouroborosSource =
+            data.ouroboros_score ??
+            (data.ouroboros && typeof data.ouroboros.score === "number" ? data.ouroboros.score : undefined) ??
+            (typeof data.ouroboros === "number" ? data.ouroboros : undefined);
+          if (typeof ouroborosSource === "number" && isFinite(ouroborosSource)) {
+            setOuro(ouroborosSource);
+          } else {
+            applySovereignGate();
+          }
+          $("timestamp").textContent = new Date().toLocaleTimeString();
+          $("ser-credit").disabled = state.gate !== "ALLOW";
+          $("run-next").disabled = state.gate !== "ALLOW";
+          if ($("cluster-submit")) {
+            $("cluster-submit").disabled = state.gate !== "ALLOW";
+          }
+        } catch (err) {
+          $("timestamp").textContent = `status error: ${err.message}`;
+        }
+      }
+
+      async function updateSer() {
+        try {
+          const data = await fetchJson(`${BASE}/v1/currency/serplus/state?token=${TOKEN}`);
+          $("ser-balance").textContent = Number(data.balance || 0).toFixed(2);
+          $("ser-entries").textContent = data.entries ?? "0";
+          window.dispatchEvent(
+            new CustomEvent("hud:ser-update", {
+              detail: {
+                balance: Number(data.balance || 0),
+                entries: data.entries ?? 0,
+              },
+            })
+          );
+        } catch (err) {
+          $("ser-balance").textContent = "err";
+          window.dispatchEvent(
+            new CustomEvent("hud:ser-update", {
+              detail: {
+                error: err.message || String(err),
+              },
+            })
+          );
+        }
+      }
+
+      async function updateNext() {
+        try {
+          const data = await fetchJson(`${BASE}/v1/next?token=${TOKEN}`);
+          state.nextCommand = data.next_command || "";
+          $("next-reason").textContent = data.reason || "—";
+          $("next-command").textContent = state.nextCommand || "(no command available)";
+        } catch (err) {
+          $("next-reason").textContent = `next error: ${err.message}`;
+          $("next-command").textContent = "(error fetching next action)";
+        }
+      }
+
+      async function poll() {
+        await Promise.all([updateStatus(), updateSer(), updateNext()]);
+      }
+
+      async function creditSer() {
+        try {
+          $("ser-credit").disabled = true;
+          await fetchJson(`${BASE}/v1/currency/serplus/paper/entry?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "credit", amount: 10, reference: "hud" }),
+          });
+        } catch (err) {
+          console.warn("SER credit failed", err);
+        } finally {
+          await updateSer();
+          $("ser-credit").disabled = state.gate !== "ALLOW";
+        }
+      }
+
+      async function runNext() {
+        const button = $("run-next");
+        button.disabled = true;
+        button.textContent = "Running…";
+        $("run-output").textContent = "(running paper orchestrator)";
+        try {
+          const data = await fetchJson(`${BASE}/v1/next/run?token=${TOKEN}`, {
+            method: "POST",
+          });
+          if (Array.isArray(data.stdout_tail)) {
+            $("run-output").textContent = data.stdout_tail.join("\n") || "(no output)";
+          } else {
+            $("run-output").textContent = JSON.stringify(data, null, 2);
+          }
+        } catch (err) {
+          $("run-output").textContent = `run error: ${err.message}`;
+        } finally {
+          button.textContent = "Run Next";
+          button.disabled = state.gate !== "ALLOW";
+          poll();
+        }
+      }
+
+      function buildClusterSpec() {
+        const provider = $("cluster-provider").value || "null";
+        const gpu = Number($("cluster-gpu").value || 0);
+        const hours = Number($("cluster-hours").value || 0);
+        const mem = Number($("cluster-mem").value || 0);
+        const cost = Number($("cluster-cost").value || 0);
+        const caps = {
+          cost_usd_max: cost > 0 ? cost : Math.max(gpu * hours * 5, 0),
+          hours_max: Math.max(hours, 0),
+        };
+        if (gpu > 0 && hours > 0) {
+          caps.energy_kwh_max = Math.max(gpu * hours * 2, 0);
+        }
+        return {
+          job: $("cluster-job").value || "hud-null-job",
+          provider,
+          resources: { gpu, hours, mem_gb: mem },
+          data: {},
+          output: {},
+          caps,
+          audit: { operator: HUD_OPERATOR, gate: state.gate, source: "hud" },
+        };
+      }
+
+      function writeClusterOutput(content) {
+        $("cluster-output").textContent =
+          typeof content === "string" ? content : JSON.stringify(content, null, 2);
+      }
+
+      async function clusterQuote() {
+        try {
+          writeClusterOutput("(quoting…)");
+          const body = JSON.stringify(buildClusterSpec());
+          const response = await fetchJson(`${BASE}/v1/cluster/quote?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+          });
+          writeClusterOutput(response.quote || response);
+        } catch (err) {
+          writeClusterOutput({ error: err.message || String(err) });
+        }
+      }
+
+      async function clusterSubmit() {
+        if (state.gate !== "ALLOW") {
+          writeClusterOutput({ error: "Gate must be ALLOW to submit." });
+          return;
+        }
+        try {
+          $("cluster-submit").disabled = true;
+          writeClusterOutput("(submitting…)");
+          const body = JSON.stringify(buildClusterSpec());
+          const response = await fetchJson(`${BASE}/v1/cluster/submit?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+          });
+          state.clusterJobId = response.job_id || response.jobId || "";
+          if (state.clusterJobId) {
+            $("cluster-job-id").value = state.clusterJobId;
+          }
+          writeClusterOutput(response);
+        } catch (err) {
+          writeClusterOutput({ error: err.message || String(err) });
+        } finally {
+          $("cluster-submit").disabled = state.gate !== "ALLOW";
+        }
+      }
+
+      async function clusterStatus() {
+        const provider = $("cluster-provider").value || "null";
+        const jobId = $("cluster-job-id").value || state.clusterJobId;
+        if (!jobId) {
+          writeClusterOutput({ error: "Submit a job first to obtain a job_id." });
+          return;
+        }
+        try {
+          writeClusterOutput("(fetching status…)");
+          const response = await fetchJson(
+            `${BASE}/v1/cluster/status?provider=${encodeURIComponent(provider)}&job_id=${encodeURIComponent(jobId)}&token=${TOKEN}`
+          );
+          if (response.job_id || response.jobId) {
+            state.clusterJobId = response.job_id || response.jobId;
+            $("cluster-job-id").value = state.clusterJobId;
+          }
+          writeClusterOutput(response);
+        } catch (err) {
+          writeClusterOutput({ error: err.message || String(err) });
+        }
+      }
+
+      async function submitOptionPrice() {
+        const button = $("opt-price");
+        if (!button) {
+          return;
+        }
+        button.disabled = true;
+        writeOutput("opt-output", "(pricing…)");
+        try {
+          const payload = {
+            model: $("opt-model")?.value || "bsm",
+            kind: $("opt-kind")?.value || "call",
+            S: readNumber("opt-s", 100),
+            K: readNumber("opt-k", 100),
+            r: readNumber("opt-r", 0.02),
+            q: readNumber("opt-q", 0.0),
+            sigma: readNumber("opt-sigma", 0.2),
+            t: readNumber("opt-t", 0.5),
+          };
+          const data = await fetchJson(`${BASE}/v1/opt/price?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          writeOutput("opt-output", data, "(option analytics appear here)");
+          if (data && typeof data.price === "number") {
+            const target = $("opt-target");
+            if (target) {
+              target.value = data.price.toFixed(6);
+            }
+          }
+        } catch (err) {
+          writeOutput("opt-output", { error: err.message || String(err) });
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      async function submitOptionIV() {
+        const button = $("opt-iv");
+        if (!button) {
+          return;
+        }
+        const model = $("opt-model")?.value || "bsm";
+        if (model !== "bsm") {
+          writeOutput("opt-output", "Implied vol calibration currently supports Black–Scholes only.");
+          return;
+        }
+        const targetEl = $("opt-target");
+        const targetPrice = targetEl ? Number(targetEl.value) : NaN;
+        if (!Number.isFinite(targetPrice)) {
+          writeOutput("opt-output", "Set Target Price by running Price first or enter it manually.");
+          return;
+        }
+        button.disabled = true;
+        writeOutput("opt-output", "(solving implied volatility…)");
+        try {
+          const payload = {
+            model,
+            kind: $("opt-kind")?.value || "call",
+            S: readNumber("opt-s", 100),
+            K: readNumber("opt-k", 100),
+            r: readNumber("opt-r", 0.02),
+            q: readNumber("opt-q", 0.0),
+            t: readNumber("opt-t", 0.5),
+            target: targetPrice,
+          };
+          const data = await fetchJson(`${BASE}/v1/opt/iv?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          writeOutput("opt-output", data, "(option analytics appear here)");
+          if (data && typeof data.iv === "number") {
+            const sigmaInput = $("opt-sigma");
+            if (sigmaInput) {
+              sigmaInput.value = data.iv.toFixed(6);
+            }
+          }
+        } catch (err) {
+          writeOutput("opt-output", { error: err.message || String(err) });
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      async function submitOptionHedge() {
+        const button = $("opt-hedge");
+        if (!button) {
+          return;
+        }
+        button.disabled = true;
+        writeOutput("hedge-output", "(hedge sizing…)");
+        try {
+          const payload = {
+            sovereign_gate: $("hedge-sovereign")?.value || state.sovereignGate.road || "ROAD",
+            gate: $("hedge-gate")?.value || state.sovereignGate.gate || "ALLOW",
+            kind: $("opt-kind")?.value || "call",
+            S: readNumber("opt-s", 100),
+            K: readNumber("opt-k", 100),
+            r: readNumber("opt-r", 0.02),
+            q: readNumber("opt-q", 0.0),
+            sigma: readNumber("opt-sigma", 0.2),
+            t: readNumber("opt-t", 0.5),
+            qty: readNumber("hedge-qty", -10),
+          };
+          const data = await fetchJson(`${BASE}/v1/opt/hedge?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          writeOutput("hedge-output", data, "(hedge preview appears here)");
+        } catch (err) {
+          writeOutput("hedge-output", { error: err.message || String(err) });
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      async function submitRegimeHmm() {
+        const button = $("regime-hmm");
+        if (!button) {
+          return;
+        }
+        const returns = parseReturnsInput();
+        if (!returns.length) {
+          writeOutput("regime-output", "Enter at least one return value.");
+          return;
+        }
+        button.disabled = true;
+        writeOutput("regime-output", "(inferring regime…)");
+        try {
+          const data = await fetchJson(`${BASE}/v1/regime/hmm?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ returns }),
+          });
+          writeOutput("regime-output", data, "(regime diagnostics appear here)");
+        } catch (err) {
+          writeOutput("regime-output", { error: err.message || String(err) });
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      async function submitRegimeRuns() {
+        const button = $("regime-runs");
+        if (!button) {
+          return;
+        }
+        const returns = parseReturnsInput();
+        if (!returns.length) {
+          writeOutput("emh-output", "Enter returns to evaluate randomness.");
+          return;
+        }
+        button.disabled = true;
+        writeOutput("emh-output", "(running randomness test…)");
+        try {
+          const data = await fetchJson(`${BASE}/v1/regime/emh/runs?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ returns }),
+          });
+          writeOutput("emh-output", data, "(EMH runs test appears here)");
+        } catch (err) {
+          writeOutput("emh-output", { error: err.message || String(err) });
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      function renderResonance(payload) {
+        const output = $("resonance-output");
+        if (!output) {
+          return;
+        }
+        if (!payload) {
+          output.textContent = "(tones will appear here)";
+          return;
+        }
+        output.textContent = JSON.stringify(payload, null, 2);
+      }
+
+      async function computeResonance() {
+        if (!$("resonance-output")) {
+          return;
+        }
+        if (!state.signals || Object.keys(state.signals).length === 0) {
+          renderResonance({ error: "Signals unavailable. Wait for status poll." });
+          return;
+        }
+        try {
+          renderResonance("(computing…)");
+          const data = await fetchJson(`${BASE}/v1/resonance/tones?token=${TOKEN}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(state.signals),
+          });
+          state.resonance = data.resonance || data;
+          renderResonance(state.resonance);
+        } catch (err) {
+          renderResonance({ error: err.message || String(err) });
+        }
+      }
+
+      function ensureAudioContext() {
+        if (state.audioCtx) {
+          return state.audioCtx;
+        }
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) {
+          return null;
+        }
+        state.audioCtx = new Ctx();
+        return state.audioCtx;
+      }
+
+      async function playResonance() {
+        if (!$("resonance-output")) {
+          return;
+        }
+        if (!state.resonance) {
+          await computeResonance();
+          if (!state.resonance) {
+            return;
+          }
+        }
+        const ctx = ensureAudioContext();
+        if (!ctx) {
+          renderResonance({ error: "WebAudio unavailable in this browser." });
+          return;
+        }
+        if (ctx.state === "suspended") {
+          try {
+            await ctx.resume();
+          } catch (err) {
+            renderResonance({ error: err.message || String(err) });
+            return;
+          }
+        }
+        const tones = Array.isArray(state.resonance.tones) ? state.resonance.tones : [];
+        const cadence = Number(state.resonance.cadence_ms || 900);
+        if (!tones.length) {
+          renderResonance({ error: "No tones present." });
+          return;
+        }
+        const start = ctx.currentTime + 0.05;
+        tones.forEach((freq, index) => {
+          const duration = Math.max(cadence / 1000, 0.2);
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = Number(freq) || 0;
+          gain.gain.setValueAtTime(0.0001, start + index * duration);
+          gain.gain.linearRampToValueAtTime(0.2, start + index * duration + 0.05);
+          gain.gain.linearRampToValueAtTime(0.0001, start + (index + 1) * duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start + index * duration);
+          osc.stop(start + (index + 1) * duration + 0.05);
+        });
+        renderResonance({
+          playing: true,
+          tones,
+          cadence_ms: cadence,
+        });
+      }
+
+      async function sendNodeMessage() {
+        const output = $("node-output");
+        const nodeId = ($("node-id")?.value || "").trim();
+        const message = ($("node-msg")?.value || "").trim();
+        if (!output) {
+          return;
+        }
+        if (!nodeId) {
+          output.textContent = "Provide a node_id to open a channel.";
+          return;
+        }
+        try {
+          const button = $("node-send");
+          if (button) {
+            button.disabled = true;
+          }
+          output.textContent = "(opening channel…)";
+          await fetchJson(
+            `${BASE}/v1/nodes/open?node_id=${encodeURIComponent(nodeId)}&token=${TOKEN}`,
+            { method: "POST" }
+          );
+          output.textContent = "(speaking…)";
+          const response = await fetchJson(
+            `${BASE}/v1/nodes/speak?node_id=${encodeURIComponent(nodeId)}&msg=${encodeURIComponent(message)}&token=${TOKEN}`,
+            { method: "POST" }
+          );
+          output.textContent = JSON.stringify(response, null, 2);
+        } catch (err) {
+          output.textContent = `node error: ${err.message || String(err)}`;
+        } finally {
+          const button = $("node-send");
+          if (button) {
+            button.disabled = false;
+          }
+        }
+      }
+
+      function copyCommand() {
+        const button = $("copy-command");
+        if (!state.nextCommand) {
+          button.textContent = "Nothing to copy";
+          setTimeout(() => (button.textContent = "Copy command"), 1500);
+          return;
+        }
+        navigator.clipboard.writeText(state.nextCommand).then(
+          () => {
+            button.textContent = "Copied";
+            setTimeout(() => (button.textContent = "Copy command"), 1500);
+          },
+          () => {
+            button.textContent = "Copy failed";
+            setTimeout(() => (button.textContent = "Copy command"), 1500);
+          }
+        );
+      }
+
+      function init() {
+        ensureSimCard();
+        try {
+          const stored = localStorage.getItem(OURO_STORAGE_KEY);
+          if (stored !== null) {
+            const parsed = Number(stored);
+            if (!Number.isNaN(parsed)) {
+              state.ouro = clamp01(parsed);
+            }
+          }
+        } catch (err) {
+          console.debug("ouro load skipped", err);
+        }
+        setOuro(state.ouro, "init");
+  syncHedgeSelectors();
+        renderResonance(null);
+        $("ser-credit").addEventListener("click", creditSer);
+        $("copy-command").addEventListener("click", copyCommand);
+        $("run-next").addEventListener("click", runNext);
+        if ($("cluster-quote")) {
+          $("cluster-quote").addEventListener("click", clusterQuote);
+        }
+        if ($("cluster-submit")) {
+          $("cluster-submit").addEventListener("click", clusterSubmit);
+          $("cluster-submit").disabled = state.gate !== "ALLOW";
+        }
+        if ($("cluster-status")) {
+          $("cluster-status").addEventListener("click", clusterStatus);
+        }
+        if ($("ouro-slider")) {
+          $("ouro-slider").addEventListener("input", handleOuroSlider);
+          $("ouro-slider").addEventListener("change", handleOuroSlider);
+        }
+        if ($("resonance-compute")) {
+          $("resonance-compute").addEventListener("click", computeResonance);
+        }
+        if ($("resonance-play")) {
+          $("resonance-play").addEventListener("click", playResonance);
+        }
+        if ($("node-send")) {
+          $("node-send").addEventListener("click", sendNodeMessage);
+        }
+        if ($("sim-refresh")) {
+          $("sim-refresh").addEventListener("click", pingEmpGrid);
+        }
+        if ($("sec-refresh")) {
+          $("sec-refresh").addEventListener("click", pingSecurityPolicy);
+        }
+        if ($("opt-price")) {
+          $("opt-price").addEventListener("click", submitOptionPrice);
+        }
+        if ($("opt-iv")) {
+          $("opt-iv").addEventListener("click", submitOptionIV);
+        }
+        if ($("opt-hedge")) {
+          $("opt-hedge").addEventListener("click", submitOptionHedge);
+        }
+        if ($("regime-hmm")) {
+          $("regime-hmm").addEventListener("click", submitRegimeHmm);
+        }
+        if ($("regime-runs")) {
+          $("regime-runs").addEventListener("click", submitRegimeRuns);
+        }
+        // Avatar event listeners
+        if ($("avatar-scan")) {
+          $("avatar-scan").addEventListener("click", scanAvatarModels);
+        }
+        if ($("avatar-load")) {
+          $("avatar-load").addEventListener("click", loadAvatarModel);
+        }
+        if ($("avatar-idle")) {
+          $("avatar-idle").addEventListener("click", setAvatarIdle);
+        }
+        if ($("avatar-sit")) {
+          $("avatar-sit").addEventListener("click", setAvatarSitting);
+        }
+        if ($("avatar-wave")) {
+          $("avatar-wave").addEventListener("click", setAvatarWaving);
+        }
+        if ($("avatar-install")) {
+          $("avatar-install").addEventListener("click", installAvatarAssets);
+        }
+        // EMP-Guard event listeners
+        if ($("emp-scan")) {
+          $("emp-scan").addEventListener("click", scanEmpPosture);
+        }
+        if ($("emp-drill")) {
+          $("emp-drill").addEventListener("click", runEmpDrill);
+        }
+        if ($("emp-rebind")) {
+          $("emp-rebind").addEventListener("click", rebindEmpEthos);
+        }
+        refreshSimSec();
+        poll();
+        setInterval(poll, POLL_MS);
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
+
+

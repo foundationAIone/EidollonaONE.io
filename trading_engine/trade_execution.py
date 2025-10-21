@@ -10,15 +10,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 # ---------------------------------------------------------------------------
 # SE41 (v4.1+) unified interface
 # ---------------------------------------------------------------------------
-from symbolic_core.symbolic_equation41 import SymbolicEquation41
+from symbolic_core.symbolic_equation import SymbolicEquation41
 from trading.helpers.se41_trading_gate import (
     se41_signals,  # builds signals packet (coherence, risk, impetus, ethos, embodiment)
-    ethos_decision,  # returns {decision: 'allow'|'hold'|'deny', pillars:{...}, reason:...}
+    ethos_decision_envelope,  # returns {decision: 'allow'|'hold'|'deny', pillars:{...}, reason:...}
     se41_numeric,  # bounded numeric synthesis for fast paths
 )
 
@@ -35,32 +35,42 @@ Default posture: SAFE; denies when signals/ethos are not satisfied.
 """
 
 # Optional dependency on AI executor signal types (kept soft)
-try:
-    from trading_engine.ai_trade_executor import (
-        TradeType,
-        TradingSignal,
-    )
+TRADE_EXECUTOR_AVAILABLE = False
 
+if TYPE_CHECKING:  # pragma: no cover - static analysis only
+    from trading_engine.ai_trade_executor import TradeType, TradingSignal
     TRADE_EXECUTOR_AVAILABLE = True
-except Exception:
-    TRADE_EXECUTOR_AVAILABLE = False
+else:
+    try:
+        from trading_engine.ai_trade_executor import (
+            TradeType,
+            TradingSignal,
+        )
 
-    class TradeType(Enum):
-        BUY = "buy"
-        SELL = "sell"
+        TRADE_EXECUTOR_AVAILABLE = True
+    except Exception:
+        TRADE_EXECUTOR_AVAILABLE = False
 
-    # Minimal TradingSignal shim for smoke usage (only fields referenced here)
-    @dataclass
-    class TradingSignal:
-        signal_id: str
-        symbol: str
-        trade_type: TradeType
-        position_size: float
-        entry_price: float
-        confidence: float = 0.6
-        risk_level: str = "medium"
-        symbolic_validation: float = 0.6
-        quantum_probability: float = 0.5
+        class TradeType(Enum):
+            BUY = "buy"
+            SELL = "sell"
+
+        # Minimal TradingSignal shim for smoke usage (only fields referenced here)
+        @dataclass
+        class TradingSignal:
+            signal_id: str
+            symbol: str
+            trade_type: TradeType
+            position_size: float
+            entry_price: float
+            market_type: str = "stocks"
+            confidence: float = 0.6
+            risk_level: str = "medium"
+            target_price: float = 0.0
+            stop_loss: float = 0.0
+            reasoning: str = "fallback"
+            symbolic_validation: float = 0.6
+            quantum_probability: float = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +144,7 @@ class SymbolicExecutionOptimizer:
         self._se41 = SymbolicEquation41()
 
     def optimize_execution_strategy(
-        self, signal: TradingSignal, market: Dict[str, Any]
+        self, signal: Any, market: Dict[str, Any]
     ) -> ExecutionStrategy:
         """
         Choose an execution strategy with a bounded SE41 numeric.
@@ -297,7 +307,7 @@ class TradeExecutionEngine:
     # ---------------------------- public API ---------------------------------
 
     async def execute_trade_signal(
-        self, signal: TradingSignal, market_conditions: Dict[str, Any]
+        self, signal: Any, market_conditions: Dict[str, Any]
     ) -> ExecutionOrder:
         """
         End-to-end: ethos-gate → strategy → timing → submit.
@@ -357,7 +367,7 @@ class TradeExecutionEngine:
 
     # --------------------------- internals -----------------------------------
 
-    def _ethos_allows(self, signal: TradingSignal, market: Dict[str, Any]) -> bool:
+    def _ethos_allows(self, signal: Any, market: Dict[str, Any]) -> bool:
         """
         Build an SE41 signals packet and query the ethos gate.
         """
@@ -383,8 +393,8 @@ class TradeExecutionEngine:
                 },
                 "explain": "trade_execution.ethos_gate",
             }
-        )
-        decision = ethos_decision(
+        ) or {}
+        decision = ethos_decision_envelope(
             sig
         )  # {'decision': 'allow'|'hold'|'deny', 'pillars': {...}, 'reason': ...}
         self._last_ethos = decision
@@ -392,7 +402,7 @@ class TradeExecutionEngine:
         self.log.info(f"Ethos gate: {d} | reason={decision.get('reason','')}")
         return d == "allow"
 
-    def _risk_hint_from_signal(self, signal: TradingSignal) -> float:
+    def _risk_hint_from_signal(self, signal: Any) -> float:
         level = str(getattr(signal, "risk_level", "medium")).lower()
         return {
             "minimal": 0.1,
@@ -585,17 +595,41 @@ if __name__ == "__main__":
     eng = create_trade_execution_engine()
 
     # Minimal signal+market for smoke
-    sig = TradingSignal(
-        signal_id=f"sig_{uuid.uuid4().hex[:6]}",
-        symbol="AAPL",
-        trade_type=TradeType.BUY,
-        position_size=100.0,
-        entry_price=195.25,
-        confidence=0.72,
-        risk_level="medium",
-        symbolic_validation=0.78,
-        quantum_probability=0.62,
-    )
+    if TRADE_EXECUTOR_AVAILABLE:
+        from trading_engine.ai_trade_executor import MarketType, RiskLevel
+
+        sig = TradingSignal(
+            signal_id=f"sig_{uuid.uuid4().hex[:6]}",
+            symbol="AAPL",
+            market_type=MarketType.STOCKS,
+            trade_type=TradeType.BUY,
+            confidence=0.72,
+            risk_level=RiskLevel.MODERATE,
+            entry_price=195.25,
+            target_price=205.0,
+            stop_loss=182.0,
+            position_size=100.0,
+            reasoning="smoke-test",
+            symbolic_validation=0.78,
+            quantum_probability=0.62,
+        )
+    else:
+        SignalCtor = cast(Any, TradingSignal)
+        sig = SignalCtor(
+            signal_id=f"sig_{uuid.uuid4().hex[:6]}",
+            symbol="AAPL",
+            market_type="stocks",
+            trade_type=TradeType.BUY,
+            position_size=100.0,
+            entry_price=195.25,
+            confidence=0.72,
+            risk_level="medium",
+            target_price=205.0,
+            stop_loss=182.0,
+            reasoning="smoke-test",
+            symbolic_validation=0.78,
+            quantum_probability=0.62,
+        )
     mkt = {
         "volatility": 0.22,
         "liquidity": 0.78,

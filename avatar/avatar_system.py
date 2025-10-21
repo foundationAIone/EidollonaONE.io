@@ -4,10 +4,31 @@ Creates and manages AI avatars with consciousness integration
 """
 
 import numpy as np
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 from datetime import datetime
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+
+try:  # pragma: no cover - optional dependency wiring
+    from symbolic_core.symbolic_equation import SymbolicEquation41  # type: ignore
+except Exception:  # pragma: no cover
+
+    class _AvatarSymbolicFallback(dict):
+        def __init__(self, risk: float, uncertainty: float, coherence: float):
+            super().__init__(risk=risk, uncertainty=uncertainty, coherence=coherence)
+            self.risk = risk
+            self.uncertainty = uncertainty
+            self.coherence = coherence
+
+        def to_dict(self) -> Dict[str, float]:
+            return dict(self)
+
+    class SymbolicEquation41:  # type: ignore
+        def evaluate(self, ctx: Dict[str, Any]) -> _AvatarSymbolicFallback:
+            risk = float(ctx.get("risk_hint", 0.4))
+            uncertainty = float(ctx.get("uncertainty_hint", 0.4))
+            coherence = float(ctx.get("coherence_hint", 0.6))
+            return _AvatarSymbolicFallback(risk, uncertainty, coherence)
 
 
 @dataclass
@@ -37,6 +58,7 @@ class Avatar(ABC):
         self.knowledge_domains = {}
         self.learning_adaptations = {}
         self.consciousness_coherence = 0.0
+        self._symbolic_equation = SymbolicEquation41()
 
         # Live session & sensory inputs (for video-call-like interaction)
         self.live_session = {
@@ -546,9 +568,22 @@ class ConversationalAvatar(Avatar):
     def generate_response(self, context: Dict[str, Any]) -> str:
         """Generate conversational response"""
         user_intent = context.get("user_intent", "unknown")
-        complexity = context.get("complexity", 0.0)
-        domain_relevance = context.get("domain_relevance", {})
+        complexity = float(context.get("complexity", 0.0) or 0.0)
+        domain_relevance_raw = context.get("domain_relevance", {}) or {}
+        domain_relevance = cast(Dict[str, float], dict(domain_relevance_raw))
         consciousness_influence = context.get("consciousness_influence", 0.0)
+
+        # Translate conversational load into SymbolicEquation hints for stylistic tuning
+        relevance_score = (
+            float(max(domain_relevance.values())) if domain_relevance else 0.0
+        )
+        se_context = {
+            "risk_hint": min(1.0, 0.35 + complexity * 0.45),
+            "uncertainty_hint": min(1.0, 0.3 + (1.0 - relevance_score) * 0.5),
+            "coherence_hint": max(0.1, 0.8 - complexity * 0.3),
+            "extras": {"domains": domain_relevance, "complexity": complexity},
+        }
+        se_signals = self._symbolic_equation.evaluate(se_context)
 
         # Determine response strategy
         if user_intent == "greeting":
@@ -560,12 +595,21 @@ class ConversationalAvatar(Avatar):
         else:
             response = self.generate_adaptive_response(context)
 
-        # Apply personality modulation
+        # Apply personality modulation informed by symbolic coherence
         response = self.apply_personality_style(response, context)
+        if se_signals.coherence < 0.45:
+            response += " I want to keep this aligned with your intent, so please let me know if I'm drifting."
+        elif se_signals.uncertainty > 0.6 and domain_relevance:
+            domain_focus = max(domain_relevance.items(), key=lambda item: item[1])[0]
+            response += f" Let's double-check our assumptions around {domain_focus} together."
 
         # Apply consciousness integration
         if consciousness_influence > 0.7:
             response = self.integrate_consciousness_perspective(response, context)
+
+        # Slightly elevate confidence wording when topic complexity is manageable
+        if complexity < 0.3 and se_signals.risk < 0.5:
+            response += " This feels comfortably within our shared expertise."
 
         return response
 
@@ -913,7 +957,9 @@ class AvatarManager:
         self.interaction_logs = []
 
     def create_avatar(
-        self, personality_name: str, personality_data: AvatarPersonality = None
+        self,
+        personality_name: str,
+        personality_data: Optional[AvatarPersonality] = None,
     ) -> str:
         """Create new avatar instance"""
         if personality_data is None:

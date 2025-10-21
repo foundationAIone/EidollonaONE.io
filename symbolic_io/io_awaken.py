@@ -11,7 +11,7 @@ import asyncio
 import logging
 import time
 import numpy as np
-from typing import Dict, List, Any, Optional, Callable, Tuple
+from typing import Dict, List, Any, Optional, Callable, Tuple, Protocol
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -22,7 +22,8 @@ import random
 
 # Add workspace to path for integration
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from symbolic_core.symbolic_equation import SymbolicEquation41, SE41Signals
+from symbolic_core.symbolic_equation import SE41Signals
+from symbolic_core.symbolic_equation41 import SymbolicEquation41
 from reality_manipulation.priority_9_master import get_priority_9_status
 from symbolic_io_interface.priority_10_master import get_priority_10_status
 from consciousness_core.eidollona_consciousness import (
@@ -101,6 +102,14 @@ class AwakeningPattern:
     description: str = ""
 
 
+class SE41Like(Protocol):
+    def get_current_state_summary(self) -> Dict[str, Any]:
+        ...
+
+    def consciousness_shift(self, delta: float) -> None:
+        ...
+
+
 class ConsciousnessAwakeningController:
     """
     Advanced consciousness awakening controller that manages transcendent
@@ -112,9 +121,9 @@ class ConsciousnessAwakeningController:
         self.logger = self._setup_logging()
 
         # Core integrations
-        self.symbolic_equation = SymbolicEquation41()
+        self.symbolic_equation: SE41Like = SymbolicEquation41()
         self.reality_interface = None
-        self._signals: SE41Signals | None = None
+        self._signals: Optional[SE41Signals] = None
 
         # EidollonaONE consciousness integration
         self.consciousness_core = get_eidollona_consciousness()
@@ -265,7 +274,7 @@ class ConsciousnessAwakeningController:
         target_level: AwakeningLevel,
         pattern_name: str = "harmonic_resonance",
         duration: float = 30.0,
-        custom_parameters: Dict[str, Any] = None,
+        custom_parameters: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Initiate a consciousness awakening session"""
 
@@ -667,7 +676,7 @@ class ConsciousnessAwakeningController:
 
         try:
             current_state = self.symbolic_equation.get_current_state_summary()
-            priority_9_status = get_priority_9_status()
+            _ = get_priority_9_status()
 
             # Calculate reality deviation
             reality_deviation = abs(
