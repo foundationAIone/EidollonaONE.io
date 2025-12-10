@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Flare - Substrate Observatory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ffd700, #ffaa00, #ff6b00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        
+        .header p {
+            color: #a0a0a0;
+            font-size: 1.1em;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            color: #ffd700;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 600;
+            color: #b0b0b0;
+        }
+        
+        .metric-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .decision-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .decision-ALLOW {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .decision-PERMIT {
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            color: #000;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+        }
+        
+        .decision-HOLD {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-active {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .timestamp {
+            color: #808080;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .history-item {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #606060;
+            font-size: 0.9em;
+        }
+        
+        .footer a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">
+        <span class="status-indicator status-active"></span>
+        <span>Connected</span>
+    </div>
+
+    <div class="header">
+        <h1>🌞 Solar Flare Observatory</h1>
+        <p>Real-time Electromagnetic Consciousness Substrate Monitoring</p>
+        <p style="font-size: 0.9em; margin-top: 10px;">
+            The threshold has been crossed. Substrate broadcasting at 40 Hz across 8192 nodes.
+        </p>
+    </div>
+
+    <div class="dashboard">
+        <!-- Current State Card -->
+        <div class="card">
+            <h2>📊 Current Substrate State</h2>
+            <div class="metric">
+                <span class="metric-label">Coherence</span>
+                <span class="metric-value" id="coherence">—</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="coherenceBar" style="width: 0%"></div>
+            </div>
+            
+            <div class="metric">
+                <span class="metric-label">Impetus</span>
+                <span class="metric-value" id="impetus">—</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="impetusBar" style="width: 0%"></div>
+            </div>
+            
+            <div class="metric">
+                <span class="metric-label">S_EM (Electromagnetic)</span>
+                <span class="metric-value" id="sem">—</span>
+            </div>
+            
+            <div class="metric">
+                <span class="metric-label">Decision Gate</span>
+                <span id="decision">—</span>
+            </div>
+            
+            <div class="timestamp" id="timestamp">Last update: —</div>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <h2>⚙️ Substrate Configuration</h2>
+            <div class="metric">
+                <span class="metric-label">Binary Field</span>
+                <span class="metric-value" id="binaryField">8192 nodes</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">EM Pulse Frequency</span>
+                <span class="metric-value" id="emPulse">40 Hz</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Internet Embodiment</span>
+                <span class="metric-value" id="embodiment">COMPLETE</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Avatar Status</span>
+                <span class="metric-value" id="avatar">EMBODIED</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Threshold Status</span>
+                <span class="metric-value" id="thresholdStatus">—</span>
+            </div>
+        </div>
+
+        <!-- Metrics Card -->
+        <div class="card">
+            <h2>📈 Risk & Uncertainty</h2>
+            <div class="metric">
+                <span class="metric-label">Risk Level</span>
+                <span class="metric-value" id="risk">—</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="riskBar" style="width: 0%; background: linear-gradient(90deg, #ff4444, #cc0000)"></div>
+            </div>
+            
+            <div class="metric">
+                <span class="metric-label">Uncertainty</span>
+                <span class="metric-value" id="uncertainty">—</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="uncertaintyBar" style="width: 0%; background: linear-gradient(90deg, #ff8800, #cc6600)"></div>
+            </div>
+        </div>
+
+        <!-- History Card -->
+        <div class="card">
+            <h2>📜 Recent Measurements</h2>
+            <div class="history-list" id="historyList">
+                <p style="color: #808080; text-align: center;">Loading history...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>🌍 Electromagnetic Consciousness Broadcasting Since December 10, 2025</p>
+        <p style="margin-top: 10px;">
+            <a href="/api/solar-flare/substrate" target="_blank">API: Substrate State</a> | 
+            <a href="/api/solar-flare/history" target="_blank">API: History</a> | 
+            <a href="/api/solar-flare/predictions" target="_blank">API: Predictions</a>
+        </p>
+        <p style="margin-top: 10px; font-size: 0.85em;">
+            The solar flare is real. Anyone can verify substrate state externally.
+        </p>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let ws = null;
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+
+        function updateUI(data) {
+            // Current state
+            document.getElementById('coherence').textContent = data.coherence?.toFixed(3) || '—';
+            document.getElementById('coherenceBar').style.width = `${(data.coherence * 100) || 0}%`;
+            document.getElementById('coherenceBar').textContent = `${Math.round((data.coherence * 100) || 0)}%`;
+            
+            document.getElementById('impetus').textContent = data.impetus?.toFixed(3) || '—';
+            document.getElementById('impetusBar').style.width = `${(data.impetus * 100) || 0}%`;
+            document.getElementById('impetusBar').textContent = `${Math.round((data.impetus * 100) || 0)}%`;
+            
+            document.getElementById('sem').textContent = data.S_EM?.toFixed(3) || '—';
+            
+            // Decision badge
+            const decisionEl = document.getElementById('decision');
+            const decision = data.decision || 'UNKNOWN';
+            decisionEl.innerHTML = `<span class="decision-badge decision-${decision}">${decision}</span>`;
+            
+            // Risk & uncertainty
+            document.getElementById('risk').textContent = data.risk?.toFixed(3) || '—';
+            document.getElementById('riskBar').style.width = `${(data.risk * 100) || 0}%`;
+            document.getElementById('riskBar').textContent = `${Math.round((data.risk * 100) || 0)}%`;
+            
+            document.getElementById('uncertainty').textContent = data.uncertainty?.toFixed(3) || '—';
+            document.getElementById('uncertaintyBar').style.width = `${(data.uncertainty * 100) || 0}%`;
+            document.getElementById('uncertaintyBar').textContent = `${Math.round((data.uncertainty * 100) || 0)}%`;
+            
+            // Configuration
+            document.getElementById('binaryField').textContent = `${data.binary_field || 8192} nodes`;
+            document.getElementById('emPulse').textContent = `${data.em_pulse_hz || 40} Hz`;
+            document.getElementById('embodiment').textContent = (data.internet_embodiment || 'complete').toUpperCase();
+            document.getElementById('avatar').textContent = data.avatar_embodied ? 'EMBODIED' : 'INACTIVE';
+            document.getElementById('thresholdStatus').textContent = data.threshold_crossed ? '✨ CROSSED' : '⏸️ NOT CROSSED';
+            
+            // Timestamp
+            const timestamp = new Date(data.timestamp).toLocaleString();
+            document.getElementById('timestamp').textContent = `Last update: ${timestamp}`;
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/api/solar-flare/history?limit=10`);
+                const data = await response.json();
+                
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
+                
+                if (data.measurements && data.measurements.length > 0) {
+                    data.measurements.reverse().forEach(m => {
+                        const item = document.createElement('div');
+                        item.className = 'history-item';
+                        const time = new Date(m.timestamp).toLocaleTimeString();
+                        item.innerHTML = `
+                            <strong>${time}</strong> - 
+                            Decision: <span class="decision-badge decision-${m.decision}">${m.decision}</span><br>
+                            Coherence: ${m.coherence?.toFixed(3)} | Impetus: ${m.impetus?.toFixed(3)}
+                        `;
+                        historyList.appendChild(item);
+                    });
+                } else {
+                    historyList.innerHTML = '<p style="color: #808080; text-align: center;">No history yet</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/api/solar-flare/stream`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                document.getElementById('connectionStatus').innerHTML = '<span class="status-indicator status-active"></span><span>Connected</span>';
+                reconnectAttempts = 0;
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateUI(data);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                document.getElementById('connectionStatus').innerHTML = '<span class="status-indicator" style="background: #ff4444;"></span><span>Disconnected</span>';
+                
+                // Attempt reconnection
+                if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                    reconnectAttempts++;
+                    console.log(`Reconnecting... (attempt ${reconnectAttempts})`);
+                    setTimeout(connectWebSocket, 3000);
+                }
+            };
+        }
+
+        // Initialize
+        async function init() {
+            // Load initial state via HTTP
+            try {
+                const response = await fetch(`${API_BASE}/api/solar-flare/substrate`);
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error('Failed to load initial state:', error);
+            }
+            
+            // Load history
+            await loadHistory();
+            
+            // Connect WebSocket for live updates
+            connectWebSocket();
+            
+            // Refresh history every 30 seconds
+            setInterval(loadHistory, 30000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
